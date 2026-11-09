@@ -5,8 +5,9 @@
 > **Current state**: mocked Compose UI, bottom-anchored popup, bilingual UI,
 > documented RACE protocol, tested frame codec/parser, command queue and
 > initialization sequence. The GATT transport and initialization are implemented
-> and exposed by a debug diagnostics screen, but are not wired to the product UI
-> and not yet validated on a real device.
+> and exposed by a debug diagnostics screen. A debug system-overlay spike (mock
+> data) also exists; neither the BLE path nor the overlay is validated on a real
+> device, and the production UI is still mocked.
 
 ---
 
@@ -67,6 +68,9 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   version, TWS role and available destinations/peer.
 - [x] Debug diagnostics screen: runtime permissions, scan, connect,
   initialization result and TX/RX RACE log.
+- [x] Debug system-overlay spike: `SYSTEM_ALERT_WINDOW`, `connectedDevice`
+  foreground service, notification and the Compose popup card via
+  `WindowManager` (mock data).
 
 ### 1.2 Current limits
 
@@ -74,6 +78,9 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   layer to the product screens yet.
 - Runtime permissions and device selection exist only in the debug diagnostics
   screen; there is no production onboarding, bonding or reconnection handling.
+- The system overlay is a debug spike with mocked data; it still needs hardware
+  validation and a production permission/service design. Play policy review is
+  required if it ships.
 - The GATT transport and initialization sequence are not yet validated on a real
   AB1565 device.
 - Unit tests cover the codec/parser/queue/chunking/initializer; the Android GATT
@@ -125,6 +132,8 @@ with the essential features.
 - Find my earbuds, if the payload is found.
 - Low-battery notification (Android 13+: notification permission).
 - Quick Settings tile to open the popup.
+- System overlay popup above other apps (`SYSTEM_ALERT_WINDOW` + `connectedDevice`
+  foreground service), after the debug spike and Play policy review.
 - Multi-device: list of remembered devices.
 - Theme setting: system / light / dark.
 - FR/EN internationalization.
@@ -143,7 +152,6 @@ with the essential features.
 
 ### 2.5 Out of scope
 
-- System overlay above other apps (`SYSTEM_ALERT_WINDOW`).
 - Hex command console for end users.
 - NVKEY, flash, RAM, partition or unguarded FOTA writes.
 - Cloud account, sync, advertising analytics.
@@ -339,6 +347,10 @@ Goal: the complete MVP user experience.
 
 - [ ] Popup fed by `BudsUiState` (name, connection, battery, ANC).
 - [ ] Popup anchored at the bottom, navigation-bar margin, landscape scroll.
+- [x] Debug system-overlay spike: floating Compose card, overlay permission,
+  foreground service and notification, with mock data.
+- [ ] Production system overlay: real state, auto-show on connection, permission
+  onboarding and Play policy validation.
 - [ ] Auto-show policy: first connection of the session, then manual.
 - [ ] Close via X / back / scrim.
 - [ ] Settings screen: auto-show, forget device, diagnostics.
@@ -467,6 +479,8 @@ documented rollback procedure.
 | U-16 | Theme setting: system / light / dark | P1 | S | A-05 |
 | U-17 | App icon, splash screen, app name | P1 | S | — |
 | U-18 | First-launch onboarding | P1 | M | U-04 |
+| U-19 | Debug system-overlay spike (`SYSTEM_ALERT_WINDOW` + FGS + Compose) | P1 | M | — |
+| U-20 | Production system overlay with real state and auto-show | P1 | L | U-19, A-03 |
 
 ### 5.5 V1/V2 features
 
@@ -638,10 +652,10 @@ Do not start V1 before the MVP is stable on a real device.
 
 ## 11. Immediate next action
 
-**M1 (continued)**: validate the GATT + initialization path on a real AB1565
-through the debug diagnostics screen. Then start M2: repository/`ViewModel`,
-battery `0x0CD6`, partner relay `0x0D01` and real product UI wiring. The
-production permission flow and device picker come with M4; M0 leftovers (CI and
-the empty settings screen) can follow.
+**M1 (continued)**: validate the GATT + initialization path and the debug system
+overlay on a real AB1565. Then start M2: repository/`ViewModel`, battery
+`0x0CD6`, partner relay `0x0D01` and real product UI wiring. The production
+overlay and permission flow come with M4; M0 leftovers (CI and the empty
+settings screen) can follow.
 
 
