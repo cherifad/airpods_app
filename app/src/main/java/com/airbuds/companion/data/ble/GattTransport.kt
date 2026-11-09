@@ -55,6 +55,7 @@ import kotlinx.coroutines.withTimeout
 class GattTransport(
     context: Context,
     private val onFrame: (RaceFrame) -> Unit,
+    private val onTx: (ByteArray) -> Unit = {},
 ) : RaceTransport {
 
     private val appContext = context.applicationContext
@@ -76,7 +77,10 @@ class GattTransport(
     @Volatile private var maxWriteSize: Int = MIN_WRITE_SIZE
 
     /** Emits devices advertising the Airoha service until [timeoutMillis] elapses. */
-    fun scan(timeoutMillis: Long = DEFAULT_SCAN_TIMEOUT_MS): Flow<ScannedDevice> = callbackFlow {
+    fun scan(
+        timeoutMillis: Long = DEFAULT_SCAN_TIMEOUT_MS,
+        filterByService: Boolean = true,
+    ): Flow<ScannedDevice> = callbackFlow {
         ensurePermissions(BlePermissions.scan)
         val adapter = adapter()
         if (!adapter.isEnabled) throw GattException("Bluetooth is disabled")
@@ -99,11 +103,15 @@ class GattTransport(
             }
         }
 
-        val filters = listOf(
-            ScanFilter.Builder()
-                .setServiceUuid(ParcelUuid(AirohaUuids.service))
-                .build(),
-        )
+        val filters = if (filterByService) {
+            listOf(
+                ScanFilter.Builder()
+                    .setServiceUuid(ParcelUuid(AirohaUuids.service))
+                    .build(),
+            )
+        } else {
+            emptyList()
+        }
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
@@ -197,6 +205,7 @@ class GattTransport(
                 throw GattException("GATT connection is not ready")
             }
 
+            onTx(bytes)
             try {
                 for (chunk in FrameChunker.chunk(bytes, maxWriteSize)) {
                     writeChunk(currentGatt, characteristic, chunk)
