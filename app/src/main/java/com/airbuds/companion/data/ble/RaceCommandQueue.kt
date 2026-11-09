@@ -15,6 +15,11 @@ class RaceCommandTimeoutException(
     "RACE command 0x%04X timed out after %d attempt(s)".format(commandId, attempts),
 )
 
+/** Executes one serialized RACE command and returns its matching response. */
+fun interface RaceCommandExecutor {
+    suspend fun execute(request: RaceFrame): RaceFrame
+}
+
 /**
  * Serializes RACE commands and matches responses by command ID.
  *
@@ -30,7 +35,7 @@ class RaceCommandQueue(
     private val timeoutMillis: Long = DEFAULT_TIMEOUT_MS,
     private val maxAttempts: Int = DEFAULT_MAX_ATTEMPTS,
     private val onIndication: (RaceFrame) -> Unit = {},
-) {
+) : RaceCommandExecutor {
     init {
         require(timeoutMillis > 0) { "timeoutMillis must be positive" }
         require(maxAttempts >= 1) { "maxAttempts must be at least 1" }
@@ -40,7 +45,7 @@ class RaceCommandQueue(
     private val pending = ConcurrentHashMap<Int, CompletableDeferred<RaceFrame>>()
 
     /** Sends [request] and returns the matching response, retrying on timeout. */
-    suspend fun execute(request: RaceFrame): RaceFrame {
+    override suspend fun execute(request: RaceFrame): RaceFrame {
         require(request.type == RaceType.Request) {
             "Only request frames can be executed, got ${request.type}"
         }
