@@ -7,8 +7,9 @@ earbuds. The UI is a polished prototype: a home screen and an **AirPods-inspired
 connection popup** with left/right/case battery levels and ANC control.
 
 The UI data is still **mocked** (`BudsState`). The RACE protocol core (frame
-model, codec, stream parser and serialized command queue) is implemented and
-unit-tested; the GATT transport is the next milestone. The protocol is
+model, codec, stream parser and serialized command queue) and the Android GATT
+transport (scan, connection, CCCD, MTU, notifications) are implemented; the
+initialization sequence and UI wiring are the next milestones. The protocol is
 documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is in
 [`plan.md`](plan.md).
 
@@ -69,6 +70,11 @@ app/src/main/java/com/airbuds/companion/
 ├── MainActivity.kt              # edge-to-edge + theme
 ├── data/
 │   └── ble/
+│       ├── AirohaUuids.kt       # service, TX/RX, CCCD and MTU constants
+│       ├── BlePermissions.kt    # runtime permission sets by API level
+│       ├── FrameChunker.kt      # split writes to the negotiated MTU
+│       ├── GattState.kt         # connection state, errors, scan result
+│       ├── GattTransport.kt     # scan/connect/CCCD/MTU/notifications
 │       ├── RaceCommandQueue.kt  # one command at a time, timeout, retry
 │       ├── RaceCodec.kt         # single-frame encode/decode
 │       ├── RaceFrame.kt         # frame model and size limits
@@ -94,6 +100,7 @@ app/src/main/res/
 └── xml/locales_config.xml       # per-app language (Android 13+)
 
 app/src/test/java/com/airbuds/companion/data/ble/
+├── FrameChunkerTest.kt          # MTU-sized write splitting
 ├── RaceCodecTest.kt             # encoding, limits, malformed frames
 ├── RaceParserTest.kt            # fragments, concatenation, resync
 └── RaceCommandQueueTest.kt      # matching, timeout, retry, serialization
@@ -114,11 +121,10 @@ app/src/test/java/com/airbuds/companion/data/ble/
 
 ## Next steps
 
-1. **GATT transport**: scan/connect to the Airoha service
-   `5052494D-2DAB-0341-6972-6F6861424C45`, enable notifications on RX, request
-   MTU 240 and feed notifications to `RaceParser`/`RaceCommandQueue`.
-2. Initialization: NVKEY 4098 → 4097, device type, role `0x0CC4`,
+1. Initialization: NVKEY 4098 → 4097, device type, role `0x0CC4`,
    available destinations `0x0D00`.
+2. Runtime permission flow and scan/device-selection screen, then connect the
+   UI to `GattTransport`.
 3. Bind the UI to real commands: battery `0x0CD6`, ANC `0x0E06` + state `0x0901`,
    TWS relay `0x0D01`.
 4. Add the repository and `ViewModel`, then replace `BudsState` with real state.
@@ -129,5 +135,7 @@ See [`plan.md`](plan.md) for the complete milestone breakdown.
 
 - The popup is **in-app**, not a system overlay: Android cannot exactly replicate the
   iOS system popup above other apps without a service and `SYSTEM_ALERT_WINDOW`.
+- BLE permissions are declared, but the runtime request flow and the device picker
+  are not implemented yet; the app still shows mocked state.
 - Screenshots were captured on the `flycc` AVD (API 30, 1080×2340).
 - English is the primary project language; the app UI also ships a French localization.
