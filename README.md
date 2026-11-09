@@ -6,9 +6,11 @@ Android companion app built with **Jetpack Compose / Material 3** for Airoha/Fly
 earbuds. The UI is a polished prototype: a home screen and an **AirPods-inspired
 connection popup** with left/right/case battery levels and ANC control.
 
-The data is still **mocked** (`BudsState`); the real BLE/RACE layer is the next
-milestone. The protocol is documented in [`PROTOCOL.md`](PROTOCOL.md), and the
-full roadmap is in [`plan.md`](plan.md).
+The UI data is still **mocked** (`BudsState`). The RACE protocol core (frame
+model, codec, stream parser and serialized command queue) is implemented and
+unit-tested; the GATT transport is the next milestone. The protocol is
+documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is in
+[`plan.md`](plan.md).
 
 | Light mode | Dark mode |
 |---|---|
@@ -40,7 +42,15 @@ echo "sdk.dir=/opt/android-sdk" > local.properties
 ./gradlew :app:installDebug
 ```
 
-The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
+Run the unit tests and lint:
+
+```bash
+./gradlew :app:testDebugUnitTest
+./gradlew :app:lintDebug
+```
+
+The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`; the
+HTML test report is at `app/build/reports/tests/testDebugUnitTest/index.html`.
 
 ## Git workflow
 
@@ -57,6 +67,13 @@ See [`AGENTS.md`](AGENTS.md) for the full conventions.
 ```
 app/src/main/java/com/airbuds/companion/
 ├── MainActivity.kt              # edge-to-edge + theme
+├── data/
+│   └── ble/
+│       ├── RaceCommandQueue.kt  # one command at a time, timeout, retry
+│       ├── RaceCodec.kt         # single-frame encode/decode
+│       ├── RaceFrame.kt         # frame model and size limits
+│       ├── RaceParser.kt        # fragment/concatenation reassembly
+│       └── RaceTransport.kt     # raw write boundary (implemented by GATT)
 ├── model/
 │   ├── AncMode.kt               # Noise Cancelling / Transparency / Off
 │   └── BudsState.kt             # mocked state (name, battery, ANC, connection)
@@ -75,6 +92,11 @@ app/src/main/res/
 ├── values/strings.xml           # English (default)
 ├── values-fr/strings.xml        # French
 └── xml/locales_config.xml       # per-app language (Android 13+)
+
+app/src/test/java/com/airbuds/companion/data/ble/
+├── RaceCodecTest.kt             # encoding, limits, malformed frames
+├── RaceParserTest.kt            # fragments, concatenation, resync
+└── RaceCommandQueueTest.kt      # matching, timeout, retry, serialization
 ```
 
 ## Manual checks (AVD API 30, 1080×2340)
@@ -92,13 +114,14 @@ app/src/main/res/
 
 ## Next steps
 
-1. **BLE/RACE**: Airoha GATT scan, service
-   `5052494D-2DAB-0341-6972-6F6861424C45`, TX/RX `43484152-…-3241-…` / `…-3141-…`.
+1. **GATT transport**: scan/connect to the Airoha service
+   `5052494D-2DAB-0341-6972-6F6861424C45`, enable notifications on RX, request
+   MTU 240 and feed notifications to `RaceParser`/`RaceCommandQueue`.
 2. Initialization: NVKEY 4098 → 4097, device type, role `0x0CC4`,
    available destinations `0x0D00`.
 3. Bind the UI to real commands: battery `0x0CD6`, ANC `0x0E06` + state `0x0901`,
    TWS relay `0x0D01`.
-4. Replace `BudsState` with a `ViewModel` + repository, including notification handling.
+4. Add the repository and `ViewModel`, then replace `BudsState` with real state.
 
 See [`plan.md`](plan.md) for the complete milestone breakdown.
 

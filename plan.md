@@ -3,7 +3,8 @@
 > **Last updated**: November 9, 2026
 > **Protocol source of truth**: [`PROTOCOL.md`](PROTOCOL.md)
 > **Current state**: mocked Compose UI, bottom-anchored popup, bilingual UI,
-> documented RACE protocol. The BLE/RACE layer is not implemented yet.
+> documented RACE protocol, tested frame codec/parser and command queue. The BLE
+> GATT transport and initialization sequence are not implemented yet.
 
 ---
 
@@ -54,12 +55,16 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
 - [x] `PROTOCOL.md`: RACE frame, transport, init, useful payloads, 142 IDs.
 - [x] `README.md`: features, build, structure, checks.
 - [x] `plan.md`: MVP, V1, V2, milestones, backlog, tests, risks.
+- [x] Unit test foundation: JUnit 4 + `kotlinx-coroutines-test`.
+- [x] RACE frame model, codec and parser with fragment/concatenation reassembly.
+- [x] Serialized command queue with 1 s timeout and 3 attempts.
 
 ### 1.2 Current limits
 
 - No real Bluetooth connection yet: everything is mocked.
 - No `ViewModel`, repository or BLE layer.
-- No automated tests (unit or instrumentation).
+- No automated tests beyond the RACE codec/parser/queue; no instrumentation
+  tests.
 - No permissions, scan, bonding or reconnection handling.
 - Case battery is not confirmed on hardware.
 - Rename, find my, EQ, touch controls and game mode payloads are not documented.
@@ -69,7 +74,7 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
 - `BudsState` mixes UI state and domain data; replace it with an immutable
   state driven by the repository.
 - The popup does not reflect the real connection state yet.
-- The project has no CI or test conventions.
+- The project has no CI yet; test conventions only cover the RACE unit tests.
 - The README still describes a prototype; update it once BLE lands.
 
 ---
@@ -248,15 +253,16 @@ Goal: a clean, testable and versioned project before adding BLE.
 
 - [x] Initialize the Git repository and `main` branch.
 - [x] Create the `develop` integration branch.
-- [ ] Create the next work branch (e.g., `feat/ble-race`) from `develop`.
-- [ ] If a remote exists: `git fetch` + `git pull` on `develop` before branching.
-- [ ] Add test dependencies: JUnit, coroutines-test, Turbine, Compose UI test.
-- [ ] Add a first trivial unit test to validate the setup.
+- [x] Create the next work branch (`feat/ble-race`) from `develop`.
+- [x] If a remote exists: `git fetch` + `git pull` on `develop` before branching.
+- [x] Add test dependencies: JUnit 4 and `kotlinx-coroutines-test` (Turbine and
+  Compose UI test will land with their first tests).
+- [x] Add a first unit test to validate the setup (`RaceCodecTest`).
 - [ ] Add `./gradlew testDebugUnitTest` and `lintDebug` to CI.
 - [x] Extract UI strings to `res/values/strings.xml` (English default).
 - [x] Add `res/values-fr/strings.xml` and Android 13+ locale config.
 - [ ] Add an empty settings screen or a navigation entry.
-- [ ] Document the build and test commands in the README.
+- [x] Document the build and test commands in the README.
 
 **Acceptance criteria**: debug build OK, unit tests OK, lint OK, no critical
 hard-coded UI string.
@@ -265,12 +271,12 @@ hard-coded UI string.
 
 Goal: talk to the firmware and see responses in the logs.
 
-- [ ] Implement `RaceFrame`, `RaceCodec`, `RaceParser`.
-- [ ] Implement `RaceCommandQueue` (one request at a time, 1 s timeout, 3 attempts).
+- [x] Implement `RaceFrame`, `RaceCodec`, `RaceParser`.
+- [x] Implement `RaceCommandQueue` (one request at a time, 1 s timeout, 3 attempts).
 - [ ] Implement `GattTransport`: scan, connect, discover, CCCD, MTU.
 - [ ] Implement the initialization sequence from `PROTOCOL.md` §4.
-- [ ] Add an in-memory fake transport for tests.
-- [ ] Unit tests: encoding, chunking, reassembly, timeout, retry.
+- [x] Add an in-memory fake transport for tests.
+- [x] Unit tests: encoding, chunking, reassembly, timeout, retry.
 - [ ] Debug diagnostics screen: TX/RX hex, state, errors.
 - [ ] Test on a real device: chip name, type, role, destinations.
 
@@ -620,8 +626,9 @@ Do not start V1 before the MVP is stable on a real device.
 
 ## 11. Immediate next action
 
-**M0 + M1**: finish the test foundation, then implement
-`RaceCodec`/`RaceParser`/`RaceCommandQueue` with a fake transport. This is the
-foundation that lets us test BLE without depending on a real device immediately.
+**M1 (continued)**: implement `GattTransport` (scan, connect, discovery, CCCD,
+MTU 240) on top of the tested `RaceParser`/`RaceCommandQueue`, then the
+initialization sequence and the debug diagnostics screen. M0 leftovers (CI and
+the empty settings screen) can follow.
 
 
