@@ -56,4 +56,16 @@
     <string name="diagnostics_none">Aucun</string>
     <string name="diagnostics_logs">Journal RACE</string>
     <string name="diagnostics_no_logs">Aucun trafic RACE pour l\'instant.</string>
+
+    <string name="overlay_title">Overlay système (debug)</string>
+    <string name="overlay_description">Carte flottante par-dessus les autres apps. Ce spike utilise des données simulées.</string>
+    <string name="overlay_permission">Permission d\'affichage</string>
+    <string name="overlay_notifications">Notifications</string>
+    <string name="overlay_open_settings">Ouvrir les réglages d\'overlay</string>
+    <string name="overlay_grant_notifications">Autoriser les notifications</string>
+    <string name="overlay_show">Afficher l\'overlay</string>
+    <string name="overlay_hide">Masquer l\'overlay</string>
+    <string name="overlay_channel_name">Popup flottant</string>
+    <string name="overlay_notification_title">Buds Companion</string>
+    <string name="overlay_notification_text">Le popup flottant est actif</string>
 </resources>

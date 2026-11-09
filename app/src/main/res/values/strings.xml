@@ -56,4 +56,16 @@
     <string name="diagnostics_none">None</string>
     <string name="diagnostics_logs">RACE log</string>
     <string name="diagnostics_no_logs">No RACE traffic yet.</string>
+
+    <string name="overlay_title">System overlay (debug)</string>
+    <string name="overlay_description">Floating card over other apps. This spike uses mock data.</string>
+    <string name="overlay_permission">Overlay permission</string>
+    <string name="overlay_notifications">Notifications</string>
+    <string name="overlay_open_settings">Open overlay settings</string>
+    <string name="overlay_grant_notifications">Allow notifications</string>
+    <string name="overlay_show">Show overlay</string>
+    <string name="overlay_hide">Hide overlay</string>
+    <string name="overlay_channel_name">Floating popup</string>
+    <string name="overlay_notification_title">Buds Companion</string>
+    <string name="overlay_notification_text">Floating popup is active</string>
 </resources>

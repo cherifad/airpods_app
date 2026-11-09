@@ -1,6 +1,9 @@
 package com.airbuds.companion.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -45,6 +48,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.airbuds.companion.R
@@ -53,6 +58,8 @@ import com.airbuds.companion.data.ble.GattState
 import com.airbuds.companion.data.ble.RaceDeviceInfo
 import com.airbuds.companion.data.ble.ScannedDevice
 import com.airbuds.companion.data.ble.TwsRole
+import com.airbuds.companion.overlay.BudsOverlayService
+import com.airbuds.companion.overlay.OverlayPermission
 
 /**
  * Debug-only screen for validating the BLE stack on a real device.
@@ -80,6 +87,30 @@ fun DiagnosticsScreen(
         } else {
             viewModel.onPermissionsDenied()
         }
+    }
+    var overlayGranted by remember {
+        mutableStateOf(OverlayPermission.canDraw(context))
+    }
+    var notificationsGranted by remember {
+        mutableStateOf(
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) == PackageManager.PERMISSION_GRANTED,
+        )
+    }
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> notificationsGranted = granted }
+    LifecycleResumeEffect(Unit) {
+        overlayGranted = OverlayPermission.canDraw(context)
+        notificationsGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+        onPauseOrDispose { }
     }
 
     val closeScreen = {
@@ -129,6 +160,35 @@ fun DiagnosticsScreen(
                             context.startActivity(intent)
                         }
                     },
+                )
+            }
+        }
+        item {
+            DiagnosticCard {
+                OverlaySection(
+                    overlayGranted = overlayGranted,
+                    notificationsGranted = notificationsGranted,
+                    needsNotificationPermission = Build.VERSION.SDK_INT >=
+                        Build.VERSION_CODES.TIRAMISU,
+                    onOpenOverlaySettings = {
+                        OverlayPermission.openSettings(context)
+                    },
+                    onGrantNotifications = {
+                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    },
+                    onShowOverlay = {
+                        if (!overlayGranted) {
+                            OverlayPermission.openSettings(context)
+                        } else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                !notificationsGranted
+                            ) {
+                                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                            BudsOverlayService.start(context)
+                        }
+                    },
+                    onHideOverlay = { BudsOverlayService.stop(context) },
                 )
             }
         }
@@ -397,6 +457,88 @@ private fun DiagnosticCard(content: @Composable ColumnScope.() -> Unit) {
         ),
     ) {
         Column(Modifier.padding(16.dp), content = content)
+    }
+}
+
+@Composable
+private fun OverlaySection(
+    overlayGranted: Boolean,
+    notificationsGranted: Boolean,
+    needsNotificationPermission: Boolean,
+    onOpenOverlaySettings: () -> Unit,
+    onGrantNotifications: () -> Unit,
+    onShowOverlay: () -> Unit,
+    onHideOverlay: () -> Unit,
+) {
+    Text(
+        text = stringResource(R.string.overlay_title),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        text = stringResource(R.string.overlay_description),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(10.dp))
+    PermissionStatusRow(
+        label = stringResource(R.string.overlay_permission),
+        granted = overlayGranted,
+    )
+    if (!overlayGranted) {
+        TextButton(onClick = onOpenOverlaySettings) {
+            Text(stringResource(R.string.overlay_open_settings))
+        }
+    }
+    if (needsNotificationPermission) {
+        PermissionStatusRow(
+            label = stringResource(R.string.overlay_notifications),
+            granted = notificationsGranted,
+        )
+        if (!notificationsGranted) {
+            TextButton(onClick = onGrantNotifications) {
+                Text(stringResource(R.string.overlay_grant_notifications))
+            }
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = onShowOverlay, modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.overlay_show))
+        }
+        OutlinedButton(onClick = onHideOverlay, modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.overlay_hide))
+        }
+    }
+}
+
+@Composable
+private fun PermissionStatusRow(label: String, granted: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(
+                if (granted) {
+                    R.string.diagnostics_permissions_granted
+                } else {
+                    R.string.diagnostics_permissions_missing
+                },
+            ),
+            style = MaterialTheme.typography.labelMedium,
+            color = if (granted) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            },
+        )
     }
 }
 
