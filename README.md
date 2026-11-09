@@ -9,10 +9,11 @@ connection popup** with left/right/case battery levels and ANC control.
 The UI data is still **mocked** (`BudsState`). The RACE protocol core (frame
 model, codec, stream parser and serialized command queue), the Android GATT
 transport (scan, connection, CCCD, MTU, notifications) and the initialization
-sequence (chip, device type, NVDM, role, peer) are implemented. The runtime
-permission flow, device picker and UI wiring are the next milestones. The
-protocol is documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is
-in [`plan.md`](plan.md).
+sequence (chip, device type, NVDM, role, peer) are implemented. A debug-only
+diagnostics screen can request permissions, scan, connect and run the sequence;
+wiring the real state into the product UI is the next milestone. The protocol is
+documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is in
+[`plan.md`](plan.md).
 
 | Light mode | Dark mode |
 |---|---|
@@ -31,6 +32,8 @@ in [`plan.md`](plan.md).
 - Dismissed with the close button, the system back gesture or a tap outside.
 - Bilingual UI: **English by default**, **French** through `values-fr`, with Android 13+
   per-app language support.
+- Debug-only BLE diagnostics: runtime permissions, filtered scan, connection,
+  initialization result and raw TX/RX RACE log.
 
 ## Build
 
@@ -90,6 +93,8 @@ app/src/main/java/com/airbuds/companion/
 └── ui/
     ├── AncModeLabels.kt         # localized ANC label mapping
     ├── BudsApp.kt               # shared state, auto-show, blur, BackHandler
+    ├── DiagnosticsScreen.kt     # debug-only BLE diagnostics UI
+    ├── DiagnosticsViewModel.kt  # permissions, scan, connect, init, logs
     ├── HomeScreen.kt            # header, hero card, controls, battery
     ├── BudsPopup.kt             # bottom popup + scrim + animations
     ├── components/
@@ -126,12 +131,13 @@ app/src/test/java/com/airbuds/companion/data/ble/
 
 ## Next steps
 
-1. Runtime permission flow and scan/device-selection screen.
-2. Wire `GattTransport` + `RaceInitializer` to show device information and a
-   debug diagnostics screen.
-3. Bind the UI to real commands: battery `0x0CD6`, ANC `0x0E06` + state `0x0901`,
+1. Validate the GATT and initialization path on a real AB1565 through the debug
+   diagnostics screen.
+2. Bind the UI to real commands: battery `0x0CD6`, ANC `0x0E06` + state `0x0901`,
    TWS relay `0x0D01`.
-4. Add the repository and `ViewModel`, then replace `BudsState` with real state.
+3. Add the repository and `ViewModel`, then replace `BudsState` with real state.
+4. Turn the diagnostics screen into the production permission and device-picker
+   flow.
 
 See [`plan.md`](plan.md) for the complete milestone breakdown.
 
@@ -139,7 +145,9 @@ See [`plan.md`](plan.md) for the complete milestone breakdown.
 
 - The popup is **in-app**, not a system overlay: Android cannot exactly replicate the
   iOS system popup above other apps without a service and `SYSTEM_ALERT_WINDOW`.
-- BLE permissions are declared, but the runtime request flow and the device picker
-  are not implemented yet; the app still shows mocked state.
+- In **debug builds**, “Diagnostics (debug)” on the home screen requests the
+  BLE permissions, scans (with or without the Airoha service filter), connects,
+  runs the initialization and shows the RACE log. The production UI is still
+  mocked.
 - Screenshots were captured on the `flycc` AVD (API 30, 1080×2340).
 - English is the primary project language; the app UI also ships a French localization.

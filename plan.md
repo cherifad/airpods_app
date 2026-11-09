@@ -5,7 +5,8 @@
 > **Current state**: mocked Compose UI, bottom-anchored popup, bilingual UI,
 > documented RACE protocol, tested frame codec/parser, command queue and
 > initialization sequence. The GATT transport and initialization are implemented
-> but not wired to the UI and not yet validated on a real device.
+> and exposed by a debug diagnostics screen, but are not wired to the product UI
+> and not yet validated on a real device.
 
 ---
 
@@ -64,13 +65,15 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   notifications, MTU 240 negotiation and MTU-sized write chunking.
 - [x] Initialization sequence: chip name, device type NVKEY selection, NVDM
   version, TWS role and available destinations/peer.
+- [x] Debug diagnostics screen: runtime permissions, scan, connect,
+  initialization result and TX/RX RACE log.
 
 ### 1.2 Current limits
 
 - The UI still uses mocked data: no repository or `ViewModel` connects the GATT
-  layer to the screens yet.
-- No runtime permission request flow, device selection screen, bonding or
-  reconnection handling.
+  layer to the product screens yet.
+- Runtime permissions and device selection exist only in the debug diagnostics
+  screen; there is no production onboarding, bonding or reconnection handling.
 - The GATT transport and initialization sequence are not yet validated on a real
   AB1565 device.
 - Unit tests cover the codec/parser/queue/chunking/initializer; the Android GATT
@@ -286,7 +289,7 @@ Goal: talk to the firmware and see responses in the logs.
 - [x] Implement the initialization sequence from `PROTOCOL.md` §4.
 - [x] Add an in-memory fake transport for tests.
 - [x] Unit tests: encoding, chunking, reassembly, timeout, retry.
-- [ ] Debug diagnostics screen: TX/RX hex, state, errors.
+- [x] Debug diagnostics screen: TX/RX hex, state, errors.
 - [ ] Test on a real device: chip name, type, role, destinations.
 
 **Acceptance criteria**: the app connects, initializes and shows the basic
@@ -635,10 +638,10 @@ Do not start V1 before the MVP is stable on a real device.
 
 ## 11. Immediate next action
 
-**M1 (continued)**: build the debug diagnostics screen (TX/RX hex, state,
-device info) on top of `GattTransport` + `RaceInitializer`, then validate the
-whole sequence on a real AB1565. The runtime permission flow and device picker
-come with the UI wiring. M0 leftovers (CI and the empty settings screen) can
-follow.
+**M1 (continued)**: validate the GATT + initialization path on a real AB1565
+through the debug diagnostics screen. Then start M2: repository/`ViewModel`,
+battery `0x0CD6`, partner relay `0x0D01` and real product UI wiring. The
+production permission flow and device picker come with M4; M0 leftovers (CI and
+the empty settings screen) can follow.
 
 
