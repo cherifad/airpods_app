@@ -29,4 +29,31 @@
 
     <string name="listening_mode">Mode d\'écoute</string>
     <string name="close">Fermer</string>
+
+    <string name="diagnostics_open">Diagnostics (debug)</string>
+    <string name="diagnostics_title">Diagnostic BLE</string>
+    <string name="diagnostics_back">Retour</string>
+    <string name="diagnostics_clear">Effacer</string>
+    <string name="diagnostics_permissions">Permissions Bluetooth</string>
+    <string name="diagnostics_permissions_granted">Accordées</string>
+    <string name="diagnostics_permissions_missing">Manquantes</string>
+    <string name="diagnostics_grant">Accorder les permissions</string>
+    <string name="diagnostics_gatt_state">État GATT</string>
+    <string name="diagnostics_filter_service">Service Airoha uniquement</string>
+    <string name="diagnostics_scan">Scanner</string>
+    <string name="diagnostics_scanning">Scan en cours…</string>
+    <string name="diagnostics_disconnect">Déconnecter</string>
+    <string name="diagnostics_bluetooth_settings">Paramètres Bluetooth</string>
+    <string name="diagnostics_devices">Appareils Airoha à proximité</string>
+    <string name="diagnostics_no_devices">Aucun appareil trouvé. Lancez un scan.</string>
+    <string name="diagnostics_unknown_device">Appareil inconnu</string>
+    <string name="diagnostics_device_info">Informations sur l\'appareil</string>
+    <string name="diagnostics_chip">Puce</string>
+    <string name="diagnostics_type">Format</string>
+    <string name="diagnostics_nvdm">Version NVDM</string>
+    <string name="diagnostics_role">Rôle TWS</string>
+    <string name="diagnostics_peer">ID du pair</string>
+    <string name="diagnostics_none">Aucun</string>
+    <string name="diagnostics_logs">Journal RACE</string>
+    <string name="diagnostics_no_logs">Aucun trafic RACE pour l\'instant.</string>
 </resources>

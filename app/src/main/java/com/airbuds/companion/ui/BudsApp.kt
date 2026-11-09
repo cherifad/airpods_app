@@ -1,5 +1,6 @@
 package com.airbuds.companion.ui
 
+import android.content.pm.ApplicationInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -11,10 +12,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.airbuds.companion.model.BudsState
 import com.airbuds.companion.model.BudsStateSaver
@@ -25,6 +28,17 @@ fun BudsApp() {
     var state by rememberSaveable(stateSaver = BudsStateSaver) { mutableStateOf(BudsState()) }
     var popupVisible by rememberSaveable { mutableStateOf(false) }
     var autoShown by rememberSaveable { mutableStateOf(false) }
+    var showDiagnostics by rememberSaveable { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val debuggable = remember(context) {
+        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
+
+    if (debuggable && showDiagnostics) {
+        DiagnosticsScreen(onBack = { showDiagnostics = false })
+        return
+    }
 
     // First launch plays the "case just opened" moment automatically.
     LaunchedEffect(Unit) {
@@ -54,6 +68,11 @@ fun BudsApp() {
             state = state,
             onAncChange = { state = state.copy(anc = it) },
             onShowPopup = { popupVisible = true },
+            onOpenDiagnostics = if (debuggable) {
+                { showDiagnostics = true }
+            } else {
+                null
+            },
             modifier = Modifier.blur(blurRadius),
         )
         BudsPopup(

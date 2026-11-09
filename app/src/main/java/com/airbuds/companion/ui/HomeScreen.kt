@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,7 @@ fun HomeScreen(
     state: BudsState,
     onAncChange: (AncMode) -> Unit,
     onShowPopup: () -> Unit,
+    onOpenDiagnostics: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -98,6 +100,17 @@ fun HomeScreen(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
         )
+        if (onOpenDiagnostics != null) {
+            TextButton(
+                onClick = onOpenDiagnostics,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = stringResource(R.string.diagnostics_open),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+        }
         Spacer(Modifier.height(24.dp))
     }
 }

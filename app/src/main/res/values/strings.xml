@@ -29,4 +29,31 @@
 
     <string name="listening_mode">Listening mode</string>
     <string name="close">Close</string>
+
+    <string name="diagnostics_open">Diagnostics (debug)</string>
+    <string name="diagnostics_title">BLE diagnostics</string>
+    <string name="diagnostics_back">Back</string>
+    <string name="diagnostics_clear">Clear</string>
+    <string name="diagnostics_permissions">Bluetooth permissions</string>
+    <string name="diagnostics_permissions_granted">Granted</string>
+    <string name="diagnostics_permissions_missing">Missing</string>
+    <string name="diagnostics_grant">Grant permissions</string>
+    <string name="diagnostics_gatt_state">GATT state</string>
+    <string name="diagnostics_filter_service">Only Airoha service</string>
+    <string name="diagnostics_scan">Scan</string>
+    <string name="diagnostics_scanning">Scanning…</string>
+    <string name="diagnostics_disconnect">Disconnect</string>
+    <string name="diagnostics_bluetooth_settings">Bluetooth settings</string>
+    <string name="diagnostics_devices">Nearby Airoha devices</string>
+    <string name="diagnostics_no_devices">No device found. Start a scan.</string>
+    <string name="diagnostics_unknown_device">Unknown device</string>
+    <string name="diagnostics_device_info">Device information</string>
+    <string name="diagnostics_chip">Chip</string>
+    <string name="diagnostics_type">Form factor</string>
+    <string name="diagnostics_nvdm">NVDM version</string>
+    <string name="diagnostics_role">TWS role</string>
+    <string name="diagnostics_peer">Peer ID</string>
+    <string name="diagnostics_none">None</string>
+    <string name="diagnostics_logs">RACE log</string>
+    <string name="diagnostics_no_logs">No RACE traffic yet.</string>
 </resources>
