@@ -42,6 +42,16 @@ echo "sdk.dir=/opt/android-sdk" > local.properties
 
 The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
 
+## Git workflow
+
+- `main` is **release-only** and must stay stable.
+- `develop` is the integration branch.
+- Work happens on short-lived `feat/...`, `fix/...`, `chore/...` or `docs/...`
+  branches cut from `develop`; pull requests target `develop`.
+- Releases merge `develop` into `main` and are tagged `vX.Y.Z`.
+
+See [`AGENTS.md`](AGENTS.md) for the full conventions.
+
 ## Structure
 
 ```

@@ -50,6 +50,7 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   landscape, light/dark theme.
 - [x] Bilingual UI: English by default, French through `values-fr`, with
   Android 13+ per-app language support.
+- [x] Git repository initialized: `main` for releases, `develop` for integration.
 - [x] `PROTOCOL.md`: RACE frame, transport, init, useful payloads, 142 IDs.
 - [x] `README.md`: features, build, structure, checks.
 - [x] `plan.md`: MVP, V1, V2, milestones, backlog, tests, risks.
@@ -59,7 +60,6 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
 - No real Bluetooth connection yet: everything is mocked.
 - No `ViewModel`, repository or BLE layer.
 - No automated tests (unit or instrumentation).
-- No Git repository initialized.
 - No permissions, scan, bonding or reconnection handling.
 - Case battery is not confirmed on hardware.
 - Rename, find my, EQ, touch controls and game mode payloads are not documented.
@@ -246,9 +246,10 @@ app/src/main/java/com/airbuds/companion/
 
 Goal: a clean, testable and versioned project before adding BLE.
 
-- [ ] Initialize the Git repository and `main` branch (if approved).
-- [ ] If a remote exists: `git fetch` + `git pull` on `main` before branching.
-- [ ] Create the working branch `feat/ble-race`.
+- [x] Initialize the Git repository and `main` branch.
+- [x] Create the `develop` integration branch.
+- [ ] Create the next work branch (e.g., `feat/ble-race`) from `develop`.
+- [ ] If a remote exists: `git fetch` + `git pull` on `develop` before branching.
 - [ ] Add test dependencies: JUnit, coroutines-test, Turbine, Compose UI test.
 - [ ] Add a first trivial unit test to validate the setup.
 - [ ] Add `./gradlew testDebugUnitTest` and `lintDebug` to CI.
@@ -372,11 +373,11 @@ documented rollback procedure.
 
 | ID | Task | Prio | Complexity | Depends on |
 |---|---|---|---|---|
-| P-01 | Initialize Git and the `main` branch (if approved) | P0 | S | — |
+| P-01 | Initialize Git, `main` and `develop` branches | P0 | S | — |
 | P-02 | Add test dependencies | P0 | S | P-01 |
 | P-03 | Configure CI build + tests + lint | P1 | M | P-02 |
 | P-04 | Extract strings to `strings.xml` | P0 | M | — |
-| P-05 | Add branch and commit conventions | P0 | S | P-01 |
+| P-05 | Document branch and commit conventions in `AGENTS.md` | P0 | S | P-01 |
 | P-06 | Add a PR template with a manual checklist | P1 | S | P-01 |
 | P-07 | Add `CHANGELOG.md` | P2 | S | — |
 | P-08 | Verify build reproducibility (wrapper, JDK) | P1 | S | — |
