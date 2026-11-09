@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Buds Companion</string>
+
+    <string name="home_title">Mes écouteurs</string>
+    <string name="demo_badge">DÉMO</string>
+    <string name="section_controls">Contrôles</string>
+    <string name="section_battery">Batterie</string>
+    <string name="show_popup">Afficher le popup</string>
+    <string name="see_popup">Voir le popup</string>
+    <string name="prototype_footer">Prototype · batteries et ANC simulés</string>
+
+    <string name="noise_control_title">Réduction de bruit</string>
+    <string name="noise_control_subtitle">Choisissez la façon dont vous entendez le monde.</string>
+
+    <string name="battery_left">Écouteur gauche</string>
+    <string name="battery_right">Écouteur droit</string>
+    <string name="battery_case">Boîtier</string>
+    <string name="battery_left_short">Gauche</string>
+    <string name="battery_right_short">Droite</string>
+    <string name="battery_percent">%1$d %%</string>
+
+    <string name="status_connected">Connecté</string>
+    <string name="status_disconnected">Déconnecté</string>
+
+    <string name="anc_noise_cancelling">Réduction</string>
+    <string name="anc_transparency">Transparence</string>
+    <string name="anc_off">Désactivé</string>
+
+    <string name="listening_mode">Mode d\'écoute</string>
+    <string name="close">Fermer</string>
+</resources>

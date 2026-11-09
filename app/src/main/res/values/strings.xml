@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Buds Companion</string>
+
+    <string name="home_title">My earbuds</string>
+    <string name="demo_badge">DEMO</string>
+    <string name="section_controls">Controls</string>
+    <string name="section_battery">Battery</string>
+    <string name="show_popup">Show popup</string>
+    <string name="see_popup">Open popup</string>
+    <string name="prototype_footer">Prototype · simulated battery and ANC</string>
+
+    <string name="noise_control_title">Noise control</string>
+    <string name="noise_control_subtitle">Choose how you hear the world.</string>
+
+    <string name="battery_left">Left earbud</string>
+    <string name="battery_right">Right earbud</string>
+    <string name="battery_case">Case</string>
+    <string name="battery_left_short">Left</string>
+    <string name="battery_right_short">Right</string>
+    <string name="battery_percent">%1$d%%</string>
+
+    <string name="status_connected">Connected</string>
+    <string name="status_disconnected">Disconnected</string>
+
+    <string name="anc_noise_cancelling">Noise Cancelling</string>
+    <string name="anc_transparency">Transparency</string>
+    <string name="anc_off">Off</string>
+
+    <string name="listening_mode">Listening mode</string>
+    <string name="close">Close</string>
+</resources>
