@@ -16,10 +16,12 @@ class RaceParser {
     private var buffer = ByteArray(0)
 
     /** Number of bytes dropped because they could not start a valid frame. */
+    @Volatile
     var discardedBytes: Long = 0
         private set
 
     /** Appends [chunk] and returns every frame completed by it, in order. */
+    @Synchronized
     fun feed(chunk: ByteArray): List<RaceFrame> {
         if (chunk.isEmpty()) return emptyList()
 
@@ -64,6 +66,7 @@ class RaceParser {
     }
 
     /** Drops any partial frame, for example after a disconnection. */
+    @Synchronized
     fun reset() {
         buffer = ByteArray(0)
     }
