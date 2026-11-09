@@ -112,7 +112,7 @@ fun BudsPopup(
                     .padding(start = 20.dp, bottom = 16.dp, end = 20.dp),
                 contentAlignment = Alignment.BottomCenter,
             ) {
-                PopupCard(
+                BudsPopupCard(
                     state = state,
                     onAncChange = onAncChange,
                     onDismiss = onDismiss,
@@ -126,7 +126,7 @@ fun BudsPopup(
 }
 
 @Composable
-private fun PopupCard(
+internal fun BudsPopupCard(
     state: BudsState,
     onAncChange: (AncMode) -> Unit,
     onDismiss: () -> Unit,
