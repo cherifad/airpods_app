@@ -19,6 +19,11 @@ documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is in
 |---|---|
 | ![Light popup](docs/screenshots/popup-light.png) | ![Dark popup](docs/screenshots/popup-dark.png) |
 | ![Light home](docs/screenshots/home-light.png) | ![Dark home](docs/screenshots/home-dark.png) |
+| ![Light system overlay](docs/screenshots/overlay-light.png) | ![Dark system overlay](docs/screenshots/overlay-dark.png) |
+
+The last row is the **debug system overlay**: the same card rendered by
+`BudsOverlayService`, above a third-party app (light) and above the launcher
+(dark), outside the app.
 
 ## Features
 
@@ -34,6 +39,8 @@ documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is in
   per-app language support.
 - Debug-only BLE diagnostics: runtime permissions, filtered scan, connection,
   initialization result and raw TX/RX RACE log.
+- Debug system overlay: the popup card in a `TYPE_APPLICATION_OVERLAY` window
+  hosted by a `connectedDevice` foreground service (mocked data).
 
 ## Build
 
@@ -90,6 +97,10 @@ app/src/main/java/com/airbuds/companion/
 ├── model/
 │   ├── AncMode.kt               # Noise Cancelling / Transparency / Off
 │   └── BudsState.kt             # mocked state (name, battery, ANC, connection)
+├── overlay/
+│   ├── BudsOverlayService.kt    # debug FGS + WindowManager overlay
+│   ├── OverlayLifecycleOwner.kt # lifecycle owner for the ComposeView
+│   └── OverlayPermission.kt     # SYSTEM_ALERT_WINDOW check and settings intent
 └── ui/
     ├── AncModeLabels.kt         # localized ANC label mapping
     ├── BudsApp.kt               # shared state, auto-show, blur, BackHandler
@@ -97,6 +108,7 @@ app/src/main/java/com/airbuds/companion/
     ├── DiagnosticsViewModel.kt  # permissions, scan, connect, init, logs
     ├── HomeScreen.kt            # header, hero card, controls, battery
     ├── BudsPopup.kt             # bottom popup + scrim + animations
+    ├── OverlayPopupContent.kt   # mock-state card rendered in the overlay
     ├── components/
     │   ├── AncSelector.kt       # custom segmented control
     │   ├── Battery.kt           # BatteryPill + BatteryRow
@@ -129,6 +141,18 @@ app/src/test/java/com/airbuds/companion/data/ble/
 - [x] English UI by default and French UI through the system locale.
 - [ ] Background blur to verify on an API 31+ device (not active on the API 30 AVD).
 
+## Manual checks (emulator API 35, 1080×2400)
+
+System overlay (debug):
+
+- [x] Overlay permission requested and granted from the diagnostics screen.
+- [x] Notification posted and the `connectedDevice` foreground service started.
+- [x] Card visible above the launcher and above a third-party app, anchored to
+      the bottom.
+- [x] Light and dark rendering of the card.
+- [x] Hidden on screens that call `Window.setHideOverlayWindows(true)` (for
+      example Settings), which is expected platform behaviour.
+
 ## Next steps
 
 1. Validate the GATT and initialization path on a real AB1565 through the debug
@@ -143,11 +167,17 @@ See [`plan.md`](plan.md) for the complete milestone breakdown.
 
 ## Notes
 
-- The popup is **in-app**, not a system overlay: Android cannot exactly replicate the
-  iOS system popup above other apps without a service and `SYSTEM_ALERT_WINDOW`.
+- The product popup is **in-app**. The system-wide behaviour is a **debug spike**
+  (`BudsOverlayService`: `TYPE_APPLICATION_OVERLAY` window plus a
+  `connectedDevice` foreground service, mocked data). It renders above the
+  launcher and third-party apps, but Android hides non-system overlays on
+  sensitive screens that call `Window.setHideOverlayWindows(true)` — Settings
+  and some permission dialogs, for example — so the popup is not guaranteed
+  everywhere.
 - In **debug builds**, “Diagnostics (debug)” on the home screen requests the
   BLE permissions, scans (with or without the Airoha service filter), connects,
   runs the initialization and shows the RACE log. The production UI is still
   mocked.
-- Screenshots were captured on the `flycc` AVD (API 30, 1080×2340).
+- Product screenshots were captured on the `flycc` AVD (API 30, 1080×2340); the
+  system-overlay screenshots on an API 35 emulator (1080×2400).
 - English is the primary project language; the app UI also ships a French localization.
