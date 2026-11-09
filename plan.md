@@ -3,9 +3,9 @@
 > **Last updated**: November 9, 2026
 > **Protocol source of truth**: [`PROTOCOL.md`](PROTOCOL.md)
 > **Current state**: mocked Compose UI, bottom-anchored popup, bilingual UI,
-> documented RACE protocol, tested frame codec/parser and command queue. The
-> GATT transport is implemented but not wired to the UI and not yet validated on
-> a real device; the initialization sequence is still missing.
+> documented RACE protocol, tested frame codec/parser, command queue and
+> initialization sequence. The GATT transport and initialization are implemented
+> but not wired to the UI and not yet validated on a real device.
 
 ---
 
@@ -62,6 +62,8 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
 - [x] BLE permissions declared (scan/connect split on Android 12+, location on 6–11).
 - [x] `GattTransport`: filtered scan, connection, service discovery, CCCD
   notifications, MTU 240 negotiation and MTU-sized write chunking.
+- [x] Initialization sequence: chip name, device type NVKEY selection, NVDM
+  version, TWS role and available destinations/peer.
 
 ### 1.2 Current limits
 
@@ -69,9 +71,10 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   layer to the screens yet.
 - No runtime permission request flow, device selection screen, bonding or
   reconnection handling.
-- The GATT transport is not yet validated on a real AB1565 device.
-- Unit tests cover the codec/parser/queue/chunking; the Android GATT layer has
-  no instrumentation test yet.
+- The GATT transport and initialization sequence are not yet validated on a real
+  AB1565 device.
+- Unit tests cover the codec/parser/queue/chunking/initializer; the Android GATT
+  layer has no instrumentation test yet.
 - Case battery is not confirmed on hardware.
 - Rename, find my, EQ, touch controls and game mode payloads are not documented.
 
@@ -280,7 +283,7 @@ Goal: talk to the firmware and see responses in the logs.
 - [x] Implement `RaceFrame`, `RaceCodec`, `RaceParser`.
 - [x] Implement `RaceCommandQueue` (one request at a time, 1 s timeout, 3 attempts).
 - [x] Implement `GattTransport`: scan, connect, discover, CCCD, MTU.
-- [ ] Implement the initialization sequence from `PROTOCOL.md` §4.
+- [x] Implement the initialization sequence from `PROTOCOL.md` §4.
 - [x] Add an in-memory fake transport for tests.
 - [x] Unit tests: encoding, chunking, reassembly, timeout, retry.
 - [ ] Debug diagnostics screen: TX/RX hex, state, errors.
@@ -632,9 +635,10 @@ Do not start V1 before the MVP is stable on a real device.
 
 ## 11. Immediate next action
 
-**M1 (continued)**: implement the initialization sequence from `PROTOCOL.md` §4
-on top of `GattTransport` + `RaceCommandQueue`, then the debug diagnostics
-screen. The runtime permission flow and device picker come with the UI wiring.
-M0 leftovers (CI and the empty settings screen) can follow.
+**M1 (continued)**: build the debug diagnostics screen (TX/RX hex, state,
+device info) on top of `GattTransport` + `RaceInitializer`, then validate the
+whole sequence on a real AB1565. The runtime permission flow and device picker
+come with the UI wiring. M0 leftovers (CI and the empty settings screen) can
+follow.
 
 

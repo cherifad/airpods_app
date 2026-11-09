@@ -7,11 +7,12 @@ earbuds. The UI is a polished prototype: a home screen and an **AirPods-inspired
 connection popup** with left/right/case battery levels and ANC control.
 
 The UI data is still **mocked** (`BudsState`). The RACE protocol core (frame
-model, codec, stream parser and serialized command queue) and the Android GATT
-transport (scan, connection, CCCD, MTU, notifications) are implemented; the
-initialization sequence and UI wiring are the next milestones. The protocol is
-documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is in
-[`plan.md`](plan.md).
+model, codec, stream parser and serialized command queue), the Android GATT
+transport (scan, connection, CCCD, MTU, notifications) and the initialization
+sequence (chip, device type, NVDM, role, peer) are implemented. The runtime
+permission flow, device picker and UI wiring are the next milestones. The
+protocol is documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is
+in [`plan.md`](plan.md).
 
 | Light mode | Dark mode |
 |---|---|
@@ -77,7 +78,10 @@ app/src/main/java/com/airbuds/companion/
 │       ├── GattTransport.kt     # scan/connect/CCCD/MTU/notifications
 │       ├── RaceCommandQueue.kt  # one command at a time, timeout, retry
 │       ├── RaceCodec.kt         # single-frame encode/decode
+│       ├── RaceDeviceInfo.kt    # chip, form factor, role, peer
 │       ├── RaceFrame.kt         # frame model and size limits
+│       ├── RaceIds.kt           # command and NVKEY identifiers
+│       ├── RaceInitializer.kt   # PROTOCOL.md §4 initialization sequence
 │       ├── RaceParser.kt        # fragment/concatenation reassembly
 │       └── RaceTransport.kt     # raw write boundary (implemented by GATT)
 ├── model/
@@ -102,6 +106,7 @@ app/src/main/res/
 app/src/test/java/com/airbuds/companion/data/ble/
 ├── FrameChunkerTest.kt          # MTU-sized write splitting
 ├── RaceCodecTest.kt             # encoding, limits, malformed frames
+├── RaceInitializerTest.kt       # init sequence, NVKEY routing, device info
 ├── RaceParserTest.kt            # fragments, concatenation, resync
 └── RaceCommandQueueTest.kt      # matching, timeout, retry, serialization
 ```
@@ -121,10 +126,9 @@ app/src/test/java/com/airbuds/companion/data/ble/
 
 ## Next steps
 
-1. Initialization: NVKEY 4098 → 4097, device type, role `0x0CC4`,
-   available destinations `0x0D00`.
-2. Runtime permission flow and scan/device-selection screen, then connect the
-   UI to `GattTransport`.
+1. Runtime permission flow and scan/device-selection screen.
+2. Wire `GattTransport` + `RaceInitializer` to show device information and a
+   debug diagnostics screen.
 3. Bind the UI to real commands: battery `0x0CD6`, ANC `0x0E06` + state `0x0901`,
    TWS relay `0x0D01`.
 4. Add the repository and `ViewModel`, then replace `BudsState` with real state.
