@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
@@ -71,6 +71,7 @@ fun ConnectSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 22.dp)
                 .padding(bottom = 28.dp),
         ) {
@@ -146,17 +147,10 @@ fun ConnectSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(360.dp),
-                    ) {
+                    Column(Modifier.fillMaxWidth()) {
                         if (state.pairedDevices.isNotEmpty()) {
-                            item { SectionLabel(stringResource(R.string.connect_paired)) }
-                            items(
-                                items = state.pairedDevices,
-                                key = { "paired-${it.device.address}" },
-                            ) { device ->
+                            SectionLabel(stringResource(R.string.connect_paired))
+                            state.pairedDevices.forEach { device ->
                                 DeviceRow(
                                     device = device,
                                     paired = true,
@@ -165,8 +159,8 @@ fun ConnectSheet(
                             }
                         }
                         if (nearby.isNotEmpty()) {
-                            item { SectionLabel(stringResource(R.string.connect_nearby)) }
-                            items(items = nearby, key = { "nearby-${it.device.address}" }) { device ->
+                            SectionLabel(stringResource(R.string.connect_nearby))
+                            nearby.forEach { device ->
                                 DeviceRow(
                                     device = device,
                                     paired = false,

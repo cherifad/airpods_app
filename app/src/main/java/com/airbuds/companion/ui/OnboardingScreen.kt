@@ -4,6 +4,8 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -68,81 +71,102 @@ fun OnboardingScreen(onFinished: () -> Unit) {
         granted = BlePermissions.hasScanPermissions(context)
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .navigationBarsPadding(),
     ) {
-        Spacer(Modifier.height(18.dp))
-        StepDots(step)
-        Spacer(Modifier.weight(0.6f))
-
-        when (step) {
-            OnboardingStep.Welcome -> WelcomeStep()
-            OnboardingStep.Permissions -> PermissionsStep(
-                granted = granted,
-                denied = denied,
-            )
-
-            OnboardingStep.Ready -> ReadyStep()
-        }
-
-        Spacer(Modifier.weight(1f))
-        when (step) {
-            OnboardingStep.Welcome -> Button(
-                onClick = { step = OnboardingStep.Permissions },
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 28.dp)
+                .padding(top = 18.dp, bottom = 120.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            StepDots(step)
+            Spacer(Modifier.height(28.dp))
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(18.dp),
+                    .widthIn(max = 520.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(stringResource(R.string.onboarding_continue))
-            }
-
-            OnboardingStep.Permissions -> Column(Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = {
-                        if (granted) {
-                            step = OnboardingStep.Ready
-                        } else {
-                            permissionLauncher.launch(BlePermissions.scan)
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp),
-                ) {
-                    Text(
-                        stringResource(
-                            if (granted) {
-                                R.string.onboarding_continue
-                            } else {
-                                R.string.onboarding_allow
-                            },
-                        ),
+                when (step) {
+                    OnboardingStep.Welcome -> WelcomeStep()
+                    OnboardingStep.Permissions -> PermissionsStep(
+                        granted = granted,
+                        denied = denied,
                     )
-                }
-                TextButton(onClick = onFinished, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.onboarding_not_now))
-                }
-            }
 
-            OnboardingStep.Ready -> Button(
-                onClick = onFinished,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(18.dp),
-            ) {
-                Text(stringResource(R.string.onboarding_start))
+                    OnboardingStep.Ready -> ReadyStep()
+                }
             }
         }
-        Spacer(Modifier.height(24.dp))
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 28.dp, vertical = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(Modifier.widthIn(max = 520.dp).fillMaxWidth()) {
+                when (step) {
+                    OnboardingStep.Welcome -> Button(
+                        onClick = { step = OnboardingStep.Permissions },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(18.dp),
+                    ) {
+                        Text(stringResource(R.string.onboarding_continue))
+                    }
+
+                    OnboardingStep.Permissions -> Column(Modifier.fillMaxWidth()) {
+                        Button(
+                            onClick = {
+                                if (granted) {
+                                    step = OnboardingStep.Ready
+                                } else {
+                                    permissionLauncher.launch(BlePermissions.scan)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(18.dp),
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (granted) {
+                                        R.string.onboarding_continue
+                                    } else {
+                                        R.string.onboarding_allow
+                                    },
+                                ),
+                            )
+                        }
+                        TextButton(onClick = onFinished, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.onboarding_not_now))
+                        }
+                    }
+
+                    OnboardingStep.Ready -> Button(
+                        onClick = onFinished,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(18.dp),
+                    ) {
+                        Text(stringResource(R.string.onboarding_start))
+                    }
+                }
+            }
+        }
     }
 }
 
