@@ -16,8 +16,9 @@ class BudsSessionTest {
 
         assertEquals("AB1565", snapshot.deviceInfo.chipName)
         assertEquals(9, snapshot.deviceInfo.peerId)
-        assertEquals(82, snapshot.battery.agentPercent)
-        assertEquals(79, snapshot.battery.partnerPercent)
+        assertEquals(true, snapshot.agentIsRight)
+        assertEquals(79, snapshot.battery.leftPercent)
+        assertEquals(82, snapshot.battery.rightPercent)
         assertEquals(
             listOf(
                 RaceIds.NVKEY_READ,
@@ -25,6 +26,7 @@ class BudsSessionTest {
                 RaceIds.NVKEY_READ,
                 RaceIds.GET_ROLE,
                 RaceIds.GET_AVAILABLE_DESTINATIONS,
+                RaceIds.NVKEY_READ,
                 RaceIds.TWS_GET_BATTERY,
                 RaceIds.RELAY_PASS_TO_DST,
             ),
@@ -33,13 +35,32 @@ class BudsSessionTest {
     }
 
     @Test
+    fun `maps the agent to the left when the audio channel says so`() = runTest {
+        val executor = FakeExecutor(
+            localLevel = 82,
+            partnerLevel = 79,
+            peerId = 9,
+            audioChannelByte = 1,
+        )
+
+        val snapshot = BudsSession(executor).handshake()
+
+        assertEquals(false, snapshot.agentIsRight)
+        assertEquals(82, snapshot.battery.leftPercent)
+        assertEquals(79, snapshot.battery.rightPercent)
+    }
+
+    @Test
     fun `does not read the partner without a peer`() = runTest {
-        val executor = FakeExecutor(localLevel = 55, peerId = null)
+        val executor = FakeExecutor(localLevel = 55, peerId = null, audioChannelByte = 1)
 
-        val battery = BudsSession(executor).readBattery(executor.initialize())
+        val battery = BudsSession(executor).readBattery(
+            executor.initialize(),
+            agentIsRight = false,
+        )
 
-        assertEquals(55, battery.agentPercent)
-        assertNull(battery.partnerPercent)
+        assertEquals(55, battery.leftPercent)
+        assertNull(battery.rightPercent)
         assertEquals(1, executor.requests.count { it.commandId == RaceIds.TWS_GET_BATTERY })
     }
 
@@ -52,10 +73,13 @@ class BudsSessionTest {
             failLocal = true,
         )
 
-        val battery = BudsSession(executor).readBattery(executor.initialize())
+        val battery = BudsSession(executor).readBattery(
+            executor.initialize(),
+            agentIsRight = true,
+        )
 
-        assertNull(battery.agentPercent)
-        assertEquals(79, battery.partnerPercent)
+        assertNull(battery.rightPercent)
+        assertEquals(79, battery.leftPercent)
     }
 
     @Test
@@ -67,19 +91,35 @@ class BudsSessionTest {
             failPartner = true,
         )
 
-        val battery = BudsSession(executor).readBattery(executor.initialize())
+        val battery = BudsSession(executor).readBattery(
+            executor.initialize(),
+            agentIsRight = false,
+        )
 
-        assertEquals(82, battery.agentPercent)
-        assertNull(battery.partnerPercent)
+        assertEquals(82, battery.leftPercent)
+        assertNull(battery.rightPercent)
     }
 
     @Test
     fun `reports an out-of-range level as unknown`() = runTest {
-        val executor = FakeExecutor(localLevel = 200, peerId = null)
+        val executor = FakeExecutor(localLevel = 200, peerId = null, audioChannelByte = 1)
 
-        val battery = BudsSession(executor).readBattery(executor.initialize())
+        val battery = BudsSession(executor).readBattery(
+            executor.initialize(),
+            agentIsRight = false,
+        )
 
-        assertNull(battery.agentPercent)
+        assertNull(battery.leftPercent)
+    }
+
+    @Test
+    fun `reports unknown when the audio channel cannot be read`() = runTest {
+        val executor = FakeExecutor(localLevel = 82, peerId = null, audioChannelByte = null)
+
+        val snapshot = BudsSession(executor).handshake()
+
+        assertNull(snapshot.agentIsRight)
+        assertNull(snapshot.battery.leftPercent)
     }
 
     @Test
@@ -106,6 +146,7 @@ class BudsSessionTest {
         private val failLocal: Boolean = false,
         private val failPartner: Boolean = false,
         private val ancFilter: Int? = null,
+        private val audioChannelByte: Int? = 2,
     ) : RaceCommandExecutor {
 
         val requests = mutableListOf<RaceFrame>()
@@ -123,6 +164,12 @@ class BudsSessionTest {
                         -> nvkeyResponse(byteArrayOf(1, *ByteArray(38), 0))
 
                         RaceIds.NVKEY_NVDM_VERSION -> nvkeyResponse(byteArrayOf(0x0C))
+
+                        RaceIds.NVKEY_AUDIO_CHANNEL -> {
+                            val value = audioChannelByte
+                                ?: throw GattException("audio channel unavailable")
+                            nvkeyResponse(byteArrayOf(0, value.toByte()))
+                        }
 
                         else -> error("Unexpected NVKEY 0x${nvkeyId.toString(16)}")
                     }
@@ -160,7 +207,8 @@ class BudsSessionTest {
                     )
                 }
 
-                RaceIds.RELAY_PASS_TO_DST -> {                    if (failPartner) throw GattException("partner battery failed")
+                RaceIds.RELAY_PASS_TO_DST -> {
+                    if (failPartner) throw GattException("partner battery failed")
                     val inner = RaceFrame(
                         RaceType.Response,
                         RaceIds.TWS_GET_BATTERY,

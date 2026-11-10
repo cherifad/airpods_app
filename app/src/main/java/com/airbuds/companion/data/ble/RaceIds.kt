@@ -26,6 +26,9 @@ object RaceIds {
     /** Maximum number of bytes requested in one NVKEY read. */
     const val NVKEY_REQUESTED_BYTES = 1000
 
+    /** NVKEY holding the audio-channel/agent-side configuration. */
+    const val NVKEY_AUDIO_CHANNEL = 0xF2B5
+
     /** Destination type of the TWS peer in a `0x0D00` response. */
     const val DESTINATION_TYPE_AWSPEER = 5
 }

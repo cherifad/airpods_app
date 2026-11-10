@@ -55,13 +55,18 @@ class BudsRepository(private val session: BudsSession) {
     /** Refreshes the battery without re-running initialization. */
     suspend fun refreshBattery() {
         val current = _snapshot.value ?: return
-        val battery = session.readBattery(current.deviceInfo)
+        val battery = session.readBattery(current.deviceInfo, current.agentIsRight)
         _snapshot.value = current.copy(battery = battery)
     }
 
     fun detach() {
         _snapshot.value = null
         _connection.value = BudsConnection.Disconnected
+    }
+
+    /** Publishes a link-level failure before [attach] could run. */
+    fun markFailed(address: String?, error: Throwable) {
+        _connection.value = BudsConnection.Failed(address, error.toBudsError())
     }
 }
 

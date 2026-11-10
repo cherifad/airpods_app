@@ -138,8 +138,8 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
                 val battery = session.readBattery(info)
                 _uiState.update { it.copy(battery = battery) }
                 appendLog(
-                    "BATTERY agent=${battery.agentPercent ?: "unknown"} " +
-                        "partner=${battery.partnerPercent ?: "unknown"}",
+                    "BATTERY left=${battery.leftPercent ?: "unknown"} " +
+                        "right=${battery.rightPercent ?: "unknown"}",
                 )
 
                 val anc = session.readAncState()

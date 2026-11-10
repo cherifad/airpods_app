@@ -30,8 +30,8 @@ class BudsRepositoryTest {
         assertEquals(BudsConnection.Ready("AA:BB:CC:DD:EE:FF"), repository.connection.value)
         val snapshot = repository.snapshot.value
         assertEquals("AB1565", snapshot?.deviceInfo?.chipName)
-        assertEquals(82, snapshot?.battery?.agentPercent)
-        assertEquals(79, snapshot?.battery?.partnerPercent)
+        assertEquals(79, snapshot?.battery?.leftPercent)
+        assertEquals(82, snapshot?.battery?.rightPercent)
     }
 
     @Test
@@ -92,8 +92,8 @@ class BudsRepositoryTest {
 
         repository.refreshBattery()
 
-        assertEquals(42, repository.snapshot.value?.battery?.agentPercent)
-        assertEquals(41, repository.snapshot.value?.battery?.partnerPercent)
+        assertEquals(41, repository.snapshot.value?.battery?.leftPercent)
+        assertEquals(42, repository.snapshot.value?.battery?.rightPercent)
         assertEquals(BudsConnection.Ready("AA:BB"), repository.connection.value)
     }
 
@@ -147,6 +147,8 @@ class BudsRepositoryTest {
                     -> nvkeyResponse(byteArrayOf(1, *ByteArray(38), 0))
 
                     RaceIds.NVKEY_NVDM_VERSION -> nvkeyResponse(byteArrayOf(0x0C))
+
+                    RaceIds.NVKEY_AUDIO_CHANNEL -> nvkeyResponse(byteArrayOf(0, 2))
                     else -> error("Unexpected NVKEY 0x${nvkeyId.toString(16)}")
                 }
 

@@ -101,8 +101,8 @@ class RaceInitializer(
             null
         }
 
-    private suspend fun readNvkey(nvkeyId: Int): ByteArray {
-        val request = RaceFrame(
+    /** Reads one NVKEY and returns its data (without the length prefix). */
+    suspend fun readNvkey(nvkeyId: Int): ByteArray {        val request = RaceFrame(
             type = RaceType.Request,
             commandId = RaceIds.NVKEY_READ,
             payload = nvkeyReadPayload(nvkeyId),

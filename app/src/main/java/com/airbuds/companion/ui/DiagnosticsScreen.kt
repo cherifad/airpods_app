@@ -464,11 +464,11 @@ private fun BatterySection(battery: BudsBattery) {
         style = MaterialTheme.typography.titleMedium,
     )
     Spacer(Modifier.height(10.dp))
-    battery.agentPercent?.let {
-        InfoRow(stringResource(R.string.diagnostics_battery_agent), "$it %")
+    battery.leftPercent?.let {
+        InfoRow(stringResource(R.string.diagnostics_battery_left), "$it %")
     }
-    battery.partnerPercent?.let {
-        InfoRow(stringResource(R.string.diagnostics_battery_partner), "$it %")
+    battery.rightPercent?.let {
+        InfoRow(stringResource(R.string.diagnostics_battery_right), "$it %")
     }
     battery.casePercent?.let {
         InfoRow(stringResource(R.string.diagnostics_battery_case), "$it %")
