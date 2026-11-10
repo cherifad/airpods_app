@@ -1,6 +1,7 @@
 package com.airbuds.companion.data.ble
 
 import kotlinx.coroutines.test.runTest
+import com.airbuds.companion.model.AncMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -81,12 +82,30 @@ class BudsSessionTest {
         assertNull(battery.agentPercent)
     }
 
+    @Test
+    fun `reads the ANC state when available`() = runTest {
+        val executor = FakeExecutor(localLevel = 50, peerId = null, ancFilter = 2)
+
+        val state = BudsSession(executor).readAncState()
+
+        assertEquals(2, state?.filter)
+        assertEquals(AncMode.NoiseCancelling, state?.mode)
+    }
+
+    @Test
+    fun `returns null when the firmware does not answer the ANC read`() = runTest {
+        val executor = FakeExecutor(localLevel = 50, peerId = null)
+
+        assertNull(BudsSession(executor).readAncState())
+    }
+
     private class FakeExecutor(
         private val localLevel: Int,
         private val partnerLevel: Int = 0,
         private val peerId: Int? = null,
         private val failLocal: Boolean = false,
         private val failPartner: Boolean = false,
+        private val ancFilter: Int? = null,
     ) : RaceCommandExecutor {
 
         val requests = mutableListOf<RaceFrame>()
@@ -122,6 +141,16 @@ class BudsSessionTest {
                         ?: ByteArray(0),
                 )
 
+                RaceIds.MMI_GET_STATUS -> {
+                    val filter = ancFilter
+                        ?: error("ANC state not configured for this fake")
+                    RaceFrame(
+                        RaceType.Response,
+                        RaceIds.MMI_GET_STATUS,
+                        byteArrayOf(0x05, 0x00, 0x00, filter.toByte(), 0x64, 0x00),
+                    )
+                }
+
                 RaceIds.TWS_GET_BATTERY -> {
                     if (failLocal) throw GattException("local battery failed")
                     RaceFrame(
@@ -131,8 +160,7 @@ class BudsSessionTest {
                     )
                 }
 
-                RaceIds.RELAY_PASS_TO_DST -> {
-                    if (failPartner) throw GattException("partner battery failed")
+                RaceIds.RELAY_PASS_TO_DST -> {                    if (failPartner) throw GattException("partner battery failed")
                     val inner = RaceFrame(
                         RaceType.Response,
                         RaceIds.TWS_GET_BATTERY,

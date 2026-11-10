@@ -9,6 +9,12 @@ object RaceIds {
     /** TWS battery read, local or wrapped in a relay for the partner. */
     const val TWS_GET_BATTERY = 0x0CD6
 
+    /** ANC/pass-through enable, disable and gain (`PROTOCOL.md` §5.2.1). */
+    const val ANC_CONTROL = 0x0E06
+
+    /** MMI status read; module 5 carries the ANC filter and gain. */
+    const val MMI_GET_STATUS = 0x0901
+
     /** Relay a frame to a TWS destination (peer or client). */
     const val RELAY_PASS_TO_DST = 0x0D01
 

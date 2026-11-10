@@ -20,6 +20,7 @@ class BudsSession(private val executor: RaceCommandExecutor) {
 
     private val initializer = RaceInitializer(executor)
     private val batteryReader = RaceBatteryReader(executor)
+    private val ancController = RaceAncController(executor)
 
     suspend fun handshake(): BudsSnapshot {
         val info = initializer.initialize()
@@ -45,6 +46,16 @@ class BudsSession(private val executor: RaceCommandExecutor) {
     private suspend fun readPercent(read: suspend () -> EarbudBattery): Int? =
         try {
             read().percent
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+
+    /** Reads the ANC filter and gain; null when the firmware does not answer. */
+    suspend fun readAncState(): AncState? =
+        try {
+            ancController.readState()
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
