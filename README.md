@@ -33,7 +33,8 @@ The last row is the **debug system overlay**: the same card rendered by
 - Material 3 light/dark theme, edge-to-edge, custom typography and shapes.
 - Popup shown automatically when the earbuds become ready; reopened from the hero card or the button.
 - Dismissed with the close button, the system back gesture or a tap outside.
-- Production connect sheet: Bluetooth rationale, permissions, scan and device picker.
+- Production connect sheet: Bluetooth rationale, permissions, paired-device list, scan and device picker.
+- First-launch onboarding explaining the Bluetooth permission before the system request.
 - Live connection, left/right/case battery and ANC state; unknown values stay “—” instead of a fake level.
 - Bilingual UI: **English by default**, **French** through `values-fr`, with Android 13+
   per-app language support.
@@ -41,8 +42,8 @@ The last row is the **debug system overlay**: the same card rendered by
   initialization result and raw TX/RX RACE log.
 - Debug system overlay: the popup card in a `TYPE_APPLICATION_OVERLAY` window
   hosted by a `connectedDevice` foreground service (mocked data).
-- In-app updates: checks GitHub Releases at launch, downloads the APK with
-  progress and opens the system installer — the browser is never used.
+- In-app updates: checks GitHub Releases at launch, asks before downloading,
+  shows progress and opens the system installer — the browser is never used.
 
 ## Build
 
@@ -100,9 +101,9 @@ committed. A `v*` tag build fails when the signing secrets are missing, so an
 unsigned or debug-signed release is never published.
 
 At launch the app reads `releases/latest`, compares the tag numerically with
-`BuildConfig.VERSION_NAME`, downloads the APK automatically and opens the system
-installer. The browser is never used; the user only has to allow installs from
-this source once (`REQUEST_INSTALL_PACKAGES`).
+`BuildConfig.VERSION_NAME`, asks whether to download, then downloads with
+progress and opens the system installer. The browser is never used; the user
+only has to allow installs from this source once (`REQUEST_INSTALL_PACKAGES`).
 
 ## Structure
 
@@ -116,7 +117,7 @@ app/src/main/java/com/airbuds/companion/
 │   │   ├── BudsSession.kt       # init + battery snapshot for the product
 │   │   ├── FrameChunker.kt      # split writes to the negotiated MTU
 │   │   ├── GattState.kt         # connection state, errors, scan result
-│   │   ├── GattTransport.kt     # scan/connect/CCCD/MTU/notifications
+│   │   ├── GattTransport.kt     # scan/connect/CCCD/MTU/paired devices
 │   │   ├── RaceAnc.kt           # 0x0E06 control + 0x0901 state read
 │   │   ├── RaceBattery.kt       # 0x0CD6 agent + 0x0D01 partner battery
 │   │   ├── RaceCommandQueue.kt  # one command at a time, timeout, retry
@@ -128,6 +129,8 @@ app/src/main/java/com/airbuds/companion/
 │   │   ├── RaceParser.kt        # fragment/concatenation reassembly
 │   │   ├── RaceTransport.kt     # raw write boundary (implemented by GATT)
 │   │   └── YfyBattery.kt        # 0x2100/0x0D case + charging notification
+│   ├── preferences/
+│   │   └── OnboardingPreferences.kt # first-launch completion flag
 │   ├── repository/
 │   │   └── BudsRepository.kt    # connection/init/battery state, error mapping
 │   └── update/
@@ -151,14 +154,15 @@ app/src/main/java/com/airbuds/companion/
     ├── BudsErrorText.kt         # error model → localized message
     ├── BudsUiState.kt           # connection, scan, battery, ANC UI state
     ├── BudsViewModel.kt         # transport + repository + scan/connect/ANC
-    ├── ConnectSheet.kt          # permissions, scan and device picker
+    ├── ConnectSheet.kt          # permissions, paired devices, scan and picker
     ├── DiagnosticsScreen.kt     # debug-only BLE diagnostics UI
     ├── DiagnosticsViewModel.kt  # permissions, scan, connect, init, logs
     ├── HomeScreen.kt            # header, hero card, controls, battery
     ├── BudsPopup.kt             # bottom popup + scrim + animations
+    ├── OnboardingScreen.kt      # welcome, permission rationale, ready
     ├── OverlayPopupContent.kt   # debug mock card rendered in the overlay
-    ├── UpdateDialog.kt          # in-app update progress/install dialog
-    ├── UpdateViewModel.kt       # check, auto-download, install state
+    ├── UpdateDialog.kt          # update prompt, progress, install dialog
+    ├── UpdateViewModel.kt       # check, confirm, download, install state
     ├── components/
     │   ├── AncSelector.kt       # custom segmented control
     │   ├── Battery.kt           # BatteryPill + BatteryRow

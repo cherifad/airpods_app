@@ -85,6 +85,9 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   mocked state are gone.
 - [x] Left/right battery mapping through the audio-channel NVKEY (`0xF2B5`).
 - [x] Sonabud branding and adaptive icon.
+- [x] First-launch onboarding with a Bluetooth rationale and permission request.
+- [x] Paired/connected audio devices are listed before the scan results.
+- [x] App updates ask for confirmation before downloading.
 - [x] GitHub Actions CI: unit tests, lint, debug/release builds, APK artifacts
   and a GitHub Release on `v*` tags.
 - [x] In-app updater: GitHub Releases check, automatic APK download with
