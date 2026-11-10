@@ -1,4 +1,4 @@
-# Buds Companion
+# Sonabud
 
 > **Language:** English. The app UI is also available in French.
 

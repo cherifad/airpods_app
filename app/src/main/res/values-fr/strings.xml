@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Buds Companion</string>
+    <string name="app_name">Sonabud</string>
 
     <string name="home_title">Mes écouteurs</string>
     <string name="demo_badge">DÉMO</string>
@@ -78,7 +78,7 @@
     <string name="overlay_show">Afficher l\'overlay</string>
     <string name="overlay_hide">Masquer l\'overlay</string>
     <string name="overlay_channel_name">Popup flottant</string>
-    <string name="overlay_notification_title">Buds Companion</string>
+    <string name="overlay_notification_title">Sonabud</string>
     <string name="overlay_notification_text">Le popup flottant est actif</string>
     <string name="update_title">Mise à jour</string>
     <string name="update_downloading">Téléchargement de la version %1$s… %2$d%%</string>

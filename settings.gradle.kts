@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BudsCompanion"
+rootProject.name = "Sonabud"
 include(":app")

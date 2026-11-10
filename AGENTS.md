@@ -1,4 +1,4 @@
-# Project Conventions — Buds Companion
+# Project Conventions — Sonabud
 
 ## Language
 

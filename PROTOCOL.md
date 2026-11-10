@@ -1,6 +1,6 @@
-# RACE Protocol — Buds Companion
+# RACE Protocol — Sonabud
 
-> Reference document for the BLE/RACE layer of **Buds Companion**.
+> Reference document for the BLE/RACE layer of **Sonabud**.
 > It covers the transport, frame format, initialization sequence and the payloads
 > needed to control Airoha AB156x/AB158x earbuds.
 >
@@ -40,7 +40,7 @@ Key properties:
 - a command is identified by a 16-bit **RACE ID**;
 - the firmware replies with the same ID and a status byte (with exceptions);
 - the protocol exposes destructive operations (flash, RAM, NVKEY, FOTA).
-  **Buds Companion must only expose the read commands and ANC settings it
+  **Sonabud must only expose the read commands and ANC settings it
   needs.** Do not add an “arbitrary hex command” screen to the consumer app.
 
 ---
@@ -180,7 +180,7 @@ documented). There are several important exceptions:
 | `0x0900` / `0x0901` MMI enum | status at `frame[8]`, after the 16-bit module ID |
 | `0x0D00` available destinations | no status: list of `(type, id)` pairs starting at `frame[6]` |
 | `0x0D01` relay | the status is the inner frame's status, extracted from `frame[8]` |
-| `0x0301` SDK version | special format, not verified here and not used by Buds Companion |
+| `0x0301` SDK version | special format, not verified here and not used by Sonabud |
 
 For the usual commands (`0x0CD6`, `0x0E06`, `0x1200`, `0x1201`), the status is
 indeed `frame[6]`.
@@ -397,7 +397,7 @@ Response: the status is at `frame[6]`, the subcommand echo at `frame[7]`.
 
 For filters `9`–`11`, Flycc forces `mode = 4` (PASSTHROUGH); for filters `1`–`4`
 it uses the ANC mode selected in the UI. For a simple ANC on/off switch in
-Buds Companion, use `filter = 1..4` with the firmware default mode, or
+Sonabud, use `filter = 1..4` with the firmware default mode, or
 `filter = 0` for off. The exact mode depends on the model; the safest option is
 to reproduce the configuration Flycc sends for the target device.
 
@@ -1011,7 +1011,7 @@ commands used in this document.
 
 ---
 
-*Document maintained for Buds Companion. See also
+*Document maintained for Sonabud. See also
 [`REPORT-communication.md`](REPORT-communication.md) for the full packer, SDK
 and CVE analysis.*
 

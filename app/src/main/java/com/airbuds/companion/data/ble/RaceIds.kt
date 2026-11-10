@@ -1,6 +1,6 @@
 package com.airbuds.companion.data.ble
 
-/** RACE command and NVKEY identifiers used by Buds Companion. */
+/** RACE command and NVKEY identifiers used by Sonabud. */
 object RaceIds {
     const val NVKEY_READ = 0x0A00
     const val GET_ROLE = 0x0CC4

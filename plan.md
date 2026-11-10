@@ -1,4 +1,4 @@
-# Development Plan — Buds Companion
+# Development Plan — Sonabud
 
 > **Last updated**: November 10, 2026
 > **Protocol source of truth**: [`PROTOCOL.md`](PROTOCOL.md)

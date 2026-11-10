@@ -43,7 +43,7 @@ class AppUpdateRepository(private val context: Context) {
     ): File = withContext(Dispatchers.IO) {
         val directory = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
             ?: context.cacheDir
-        val target = File(directory, "buds-companion-${release.version}.apk")
+        val target = File(directory, "sonabud-${release.version}.apk")
         val partial = File(directory, "${target.name}.part")
 
         val connection = (URL(release.asset.url).openConnection() as HttpURLConnection).apply {
@@ -167,7 +167,7 @@ class AppUpdateRepository(private val context: Context) {
         const val LATEST_RELEASE_URL = "https://api.github.com/repos/$REPOSITORY/releases/latest"
 
         private const val APK_MIME = "application/vnd.android.package-archive"
-        private const val USER_AGENT = "BudsCompanion"
+        private const val USER_AGENT = "Sonabud"
         private const val CONNECT_TIMEOUT_MS = 10_000
         private const val READ_TIMEOUT_MS = 20_000
         private const val DOWNLOAD_BUFFER = 8 * 1024
