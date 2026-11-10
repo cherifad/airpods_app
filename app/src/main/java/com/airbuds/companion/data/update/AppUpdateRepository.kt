@@ -163,7 +163,7 @@ class AppUpdateRepository(private val context: Context) {
     }
 
     companion object {
-        const val REPOSITORY = "cherifad/airpods_app"
+        const val REPOSITORY = "cherifad/sonabud"
         const val LATEST_RELEASE_URL = "https://api.github.com/repos/$REPOSITORY/releases/latest"
 
         private const val APK_MIME = "application/vnd.android.package-archive"

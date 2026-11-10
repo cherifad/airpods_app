@@ -286,7 +286,7 @@ app/src/main/java/com/airbuds/companion/
 - [?] **Multi-device**: V1 or V2?
 - [?] **English/French**: English primary and French secondary confirmed; when
   to add more locales?
-- [x] **Git/CI**: GitHub Actions on `cherifad/airpods_app`, releases on tags.
+- [x] **Git/CI**: GitHub Actions on `cherifad/sonabud`, releases on tags.
 - [x] **App updates**: GitHub Releases checked at launch, APK downloaded in the
   app and handed to the system installer; no browser, no sideload helper.
 - [x] **Firmware updates**: check and notify only, download and install strictly
