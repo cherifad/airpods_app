@@ -68,6 +68,7 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
     fun install() {
         val file = downloaded ?: return
         if (!repository.install(file)) {
+            openInstallPermissionSettings()
             _state.value = UpdateState.InstallPermissionRequired
         }
     }

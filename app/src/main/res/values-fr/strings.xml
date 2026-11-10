@@ -87,6 +87,5 @@
     <string name="update_later">Plus tard</string>
     <string name="update_failed">Échec de la mise à jour : %1$s</string>
     <string name="update_retry">Réessayer</string>
-    <string name="update_permission">Autorisez l\'installation depuis cette application pour appliquer la mise à jour.</string>
-    <string name="update_open_settings">Ouvrir les paramètres</string>
+    <string name="update_permission">Autorisez l\'installation depuis cette application, puis appuyez à nouveau sur Installer.</string>
 </resources>

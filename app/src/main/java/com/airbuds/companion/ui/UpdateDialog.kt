@@ -19,7 +19,6 @@ import com.airbuds.companion.R
 fun UpdateDialog(
     state: UpdateState,
     onInstall: () -> Unit,
-    onOpenSettings: () -> Unit,
     onRetry: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -73,8 +72,8 @@ fun UpdateDialog(
             title = { Text(stringResource(R.string.update_title)) },
             text = { Text(stringResource(R.string.update_permission)) },
             confirmButton = {
-                TextButton(onClick = onOpenSettings) {
-                    Text(stringResource(R.string.update_open_settings))
+                TextButton(onClick = onInstall) {
+                    Text(stringResource(R.string.update_install))
                 }
             },
             dismissButton = {

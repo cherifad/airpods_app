@@ -93,7 +93,6 @@ fun BudsApp() {
         UpdateDialog(
             state = updateState,
             onInstall = updateViewModel::install,
-            onOpenSettings = updateViewModel::openInstallPermissionSettings,
             onRetry = updateViewModel::retry,
             onDismiss = updateViewModel::dismiss,
         )

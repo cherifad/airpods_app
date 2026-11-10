@@ -87,6 +87,5 @@
     <string name="update_later">Later</string>
     <string name="update_failed">Update failed: %1$s</string>
     <string name="update_retry">Retry</string>
-    <string name="update_permission">Allow installs from this app to apply the update.</string>
-    <string name="update_open_settings">Open settings</string>
+    <string name="update_permission">Allow installs from this app, then tap Install again.</string>
 </resources>
