@@ -70,7 +70,7 @@ fun HomeScreen(
         state.visibleError?.let { error ->
             Spacer(Modifier.height(10.dp))
             Text(
-                text = stringResource(error.messageRes()),
+                text = error.userMessage(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )

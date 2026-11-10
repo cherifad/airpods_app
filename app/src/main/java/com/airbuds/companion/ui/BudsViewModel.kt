@@ -3,6 +3,7 @@ package com.airbuds.companion.ui
 import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothDevice
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.airbuds.companion.data.ble.BudsSession
@@ -136,6 +137,7 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
+                Log.w(TAG, "Connection to ${device.address} failed", error)
                 repository.markFailed(device.address, error)
             }
         }
@@ -208,5 +210,9 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         transport.close()
         super.onCleared()
+    }
+
+    companion object {
+        private const val TAG = "BudsViewModel"
     }
 }

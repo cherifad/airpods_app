@@ -130,7 +130,7 @@ fun ConnectSheet(
                 state.visibleError?.let { error ->
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = stringResource(error.messageRes()),
+                        text = error.userMessage(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
