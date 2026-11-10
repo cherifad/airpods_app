@@ -21,3 +21,8 @@ rea/
 *.apk
 *.aab
 *.hprof
+
+# Signing material
+*.jks
+*.keystore
+release.jks*
