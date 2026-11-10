@@ -167,54 +167,81 @@ class GattTransport(
 
         connectionMutex.withLock {
             closeInternal(notify = false)
-            parser.reset()
-
-            val address = device.address
-            val signal = CompletableDeferred<Unit>()
-            ready = signal
-            _state.value = GattState.Connecting(address)
-
-            val newGatt = try {
-                device.connectGatt(
-                    appContext,
-                    false,
-                    gattCallback,
-                    BluetoothDevice.TRANSPORT_LE,
-                )
-            } catch (error: SecurityException) {
-                ready = null
-                _state.value = GattState.Failed(address, "Bluetooth permission denied")
-                throw GattException("Bluetooth permission denied", error)
-            }
-
-            if (newGatt == null) {
-                ready = null
-                _state.value = GattState.Failed(address, "connectGatt returned null")
-                throw GattException("connectGatt returned null")
-            }
-            gatt = newGatt
-
             try {
-                withTimeout(timeoutMillis) { signal.await() }
-            } catch (timeout: TimeoutCancellationException) {
-                closeInternal(notify = false)
-                val reason = "Connection timed out"
-                _state.value = GattState.Failed(address, reason)
-                throw GattException("$reason after $timeoutMillis ms", timeout)
+                connectOnce(device, timeoutMillis, BluetoothDevice.TRANSPORT_LE)
             } catch (cancelled: CancellationException) {
                 closeInternal(notify = false)
                 throw cancelled
-            } catch (error: GattException) {
+            } catch (first: Exception) {
                 closeInternal(notify = false)
-                if (_state.value !is GattState.Failed) {
-                    _state.value = GattState.Failed(
-                        address,
-                        error.message ?: "Connection failed",
-                    )
-                }
-                throw error
+                if (!shouldRetry(first)) throw first
+                Log.w(TAG, "LE connect failed, retrying with TRANSPORT_AUTO", first)
+                delay(RETRY_DELAY_MS)
+                connectOnce(device, timeoutMillis, BluetoothDevice.TRANSPORT_AUTO)
             }
         }
+    }
+
+    private suspend fun connectOnce(
+        device: BluetoothDevice,
+        timeoutMillis: Long,
+        transport: Int,
+    ) {
+        parser.reset()
+
+        val address = device.address
+        val signal = CompletableDeferred<Unit>()
+        ready = signal
+        _state.value = GattState.Connecting(address)
+
+        val newGatt = try {
+            device.connectGatt(
+                appContext,
+                false,
+                gattCallback,
+                transport,
+            )
+        } catch (error: SecurityException) {
+            ready = null
+            _state.value = GattState.Failed(address, "Bluetooth permission denied")
+            throw GattException("Bluetooth permission denied", error)
+        }
+
+        if (newGatt == null) {
+            ready = null
+            _state.value = GattState.Failed(address, "connectGatt returned null")
+            throw GattException("connectGatt returned null")
+        }
+        gatt = newGatt
+
+        try {
+            withTimeout(timeoutMillis) { signal.await() }
+        } catch (timeout: TimeoutCancellationException) {
+            closeInternal(notify = false)
+            val reason = "Connection timed out"
+            _state.value = GattState.Failed(address, reason)
+            throw GattException("$reason after $timeoutMillis ms", timeout)
+        } catch (cancelled: CancellationException) {
+            closeInternal(notify = false)
+            throw cancelled
+        } catch (error: GattException) {
+            closeInternal(notify = false)
+            if (_state.value !is GattState.Failed) {
+                _state.value = GattState.Failed(
+                    address,
+                    error.message ?: "Connection failed",
+                )
+            }
+            throw error
+        }
+    }
+
+    /** status 133 and timeouts are often transient; a second transport may help. */
+    private fun shouldRetry(error: Exception): Boolean {
+        val message = error.message.orEmpty()
+        return message.contains("133") ||
+            message.contains("timed out", ignoreCase = true) ||
+            message.contains("returned null", ignoreCase = true)
     }
 
     /** Writes one encoded RACE frame, splitting it across GATT writes if needed. */
@@ -504,5 +531,6 @@ class GattTransport(
         const val PAIRED_RSSI = Int.MIN_VALUE
 
         private const val TAG = "GattTransport"
+        private const val RETRY_DELAY_MS = 350L
     }
 }
