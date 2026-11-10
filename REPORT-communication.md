@@ -160,19 +160,45 @@ an arbitrary hexadecimal frame (`host.send(bytes)`) or use
 
 ## 7. Firmware and backend chain
 
-- Update discovery over cleartext HTTP (`usesCleartextTraffic=true`):
-  - `http://twsfota.198509.xyz/tws_fota_bin/` (TWS, `AB157x/` for AB157x)
+Two independent update paths exist.
+
+**App (APK) update — `com.airoha.yfy.AutoUpdater`**
+
+- Version feed over cleartext HTTP:
+  `http://apkdown.198509.xyz/apk_update/output.json`.
+- The JSON is parsed with regexes for `outputFile` and `versionName`, then the
+  dotted versions are compared by string segment (`compareAppVersion`).
+- If the remote version is newer, a dialog offers "download now" / "later"; the
+  download is refused outside Wi-Fi unless the user overrides it.
+- The APK is streamed to
+  `getExternalFilesDir(DOWNLOADS)/Flycc.apk` and installed with a
+  `FileProvider` `ACTION_VIEW` intent (`REQUEST_INSTALL_PACKAGES`).
+- No checksum, signature or TLS validation is performed. "Download later" kills
+  the process.
+- The check runs from the "Mine" settings page (and after its permission
+  result), not on every launch. `getAutoUpdateFlag()` always returns `1`, so
+  the stored toggle is ignored.
+
+**Earbud firmware (FOTA)**
+
+- Update discovery over cleartext HTTP:
+  - `http://twsfota.198509.xyz/tws_fota_bin/AB157x/` (AB157x/AB1565/AB1568)
+  - `http://twsfota.198509.xyz/tws_fota_bin/` (AB1562)
   - `http://twsfota.198509.xyz/headset_fota_bin/` (single)
-  - `http://apkdown.198509.xyz/apk_update/` (APK auto-update, permission
-    `REQUEST_INSTALL_PACKAGES`)
   - `http://msg.198509.xyz/` and `http://user.198509.xyz/add` (user/device info)
+- Discovery uses two Java-Properties XML files, `fota` and `update_info`
+  (`_eng` outside CN), under `<Company>/<Module>/`; the package path and file
+  naming are documented in [`PROTOCOL.md`](PROTOCOL.md) §5.6.
+- Firmware is checked with CRC8/CRC16 on the app side (`libutils/CRC8`,
+  `CRC16`); the flash stage writes a per-page CRC8. There is no application-level
+  signature on the app side.
+- The transfer sequence, command IDs and payloads (`0x1C00`–`0x1C1C`, `0x0402`,
+  `0x0404`, `0x0431`, `0x0433`) are documented in
+  [`PROTOCOL.md`](PROTOCOL.md) §5.6.
 - Telemetry: `YfySendUserInfo`, `MineFragment`; device registration through the
   RACE frame `MESSAGE_DEVICE = {05 5A 09 00 00 21 09 44 09 45 56 49 43 ...}`.
   The original report labels this ID `0x0921`; the bytes decode to **`0x2100`**
   (`00 21` little-endian).
-- Firmware is checked with CRC8/CRC16 on the app side (`libutils/CRC8`,
-  `CRC16`) and RACE integrity commands; there is no application-level signature
-  on the app side.
 
 ## 8. Security findings
 

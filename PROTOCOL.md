@@ -530,7 +530,146 @@ NVKEY write commands (`0x0A01`, `0x0A03`, etc.) are **out of scope** for Buds
 Companion: they modify persistent configuration and can make the device
 unusable.
 
-### 5.6 Other useful IDs
+### 5.6 Firmware update (FOTA)
+
+> Evidence: `com.airoha.libfota1568` (state machine, stages and packets),
+> `YFY157xTwsFotaFragment` / `YFY1562TwsFotaFragment` and `AutoUpdater`,
+> decompiled from Flycc 2.0.35 (`classes71.dex`). Static observation only: the
+> update path was not run against real hardware. Anything not listed here is
+> still unknown.
+
+#### 5.6.1 Update discovery (vendor server)
+
+Flycc uses plain HTTP and an unauthenticated file server:
+
+| Target | Base URL |
+|---|---|
+| AB157x / AB1565 / AB1568 TWS | `http://twsfota.198509.xyz/tws_fota_bin/AB157x/` |
+| AB1562 TWS | `http://twsfota.198509.xyz/tws_fota_bin/` |
+| Single earbud / headset | `http://twsfota.198509.xyz/headset_fota_bin/` |
+
+The path is `<Company>/<Module>/`, both read from the DFU information
+(`0x1C07` / the dual query). Two Java-Properties XML files drive the check:
+
+- `fota`: maps the current firmware version to a package directory;
+- `update_info` (or `update_info_eng` outside CN): maps the package to release
+  notes.
+
+For AB157x the `fota` key is the current version string itself (for example
+`1.2.3`). For AB1562 it is `<Company>_<Module>_V<version>`. The value has the
+form `<name>_fota`; `<name>` is the package short name and the new version is
+the `_V<version>` suffix.
+
+The app compares the agent and partner versions by their last dot-separated
+number and uses the **older** one as the lookup key, so both earbuds are updated
+from the same package. The download is gated by a Wi-Fi check and a
+confirmation dialog before the transfer starts.
+
+#### 5.6.2 Package layout
+
+AB157x uses one combined image for both earbuds:
+
+```
+.../fota_bin/AB157x/<Company>/<Module>/<name>_fota/<name>_fota.bin
+```
+
+AB1562 uses per-earbud images and optional file-system images:
+
+```
+.../tws_fota_bin/<Company>/<Module>/<name>_fota/<name>_left_FotaPackage.bin
+.../tws_fota_bin/<Company>/<Module>/<name>_fota/<name>_right_FotaPackage.bin
+.../tws_fota_bin/<Company>/<Module>/<name>_fota/<name>_filesystemimage.bin
+.../tws_fota_bin/<Company>/<Module>/<name>_fota/<name>_filesystempackage.bin
+```
+
+The container header, compression and any whole-image checksum are **not
+handled by the observed app code**. The only integrity data it computes is the
+per-page CRC8 written during the flash stage. Package signing is unknown.
+
+#### 5.6.3 DFU information
+
+`0x1C07` get version:
+
+```
+request  : 05 5A 04 00 07 1C [role]          role 0 = agent, 1 = partner
+response : 05 5D <len> 00 07 1C [status] [role] [versionLength] [ASCII version]
+```
+
+`0x1C00` (single) partition info:
+
+```
+request  : 05 5A 03 00 00 1C 00
+response : 05 5B 0D 00 00 1C [status] [partitionId] [storageType] [start LE32] [length LE32]
+```
+
+`0x1C14` (TWS) query partition, request `05 5A 03 00 14 1C 00`:
+
+```
+05 5B 16 00 14 1C [status] [role] [storageType] [agentStart LE32] [agentLength LE32]
+                [partnerRole] [partnerStart LE32] [partnerLength LE32]
+```
+
+#### 5.6.4 Transfer sequence
+
+`0x1C08` start payload: `[target] [mode]`, where target is `1` for a single
+earbud and `3` for TWS, and mode is the `FotaModeId`: `0` background,
+`1` active, `2` adaptive.
+
+Single earbud:
+
+1. `0x1C00` partition info.
+2. `0x1C08` start.
+3. `0x1C1C` query transmit interval.
+4. `0x0433` partition erase status.
+5. `0x0431` compare partitions (SHA-256 diff).
+6. `0x1C0A` start transaction.
+7. `0x1C06` write state `0x0200`.
+8. `0x0404` erase 4 KB blocks.
+9. `0x1C06` write state `0x0201`, then `0x0210`.
+10. `0x0402` program 256-byte pages (two per command by default).
+11. `0x1C01` integrity check.
+12. `0x1C06` write state `0x0211`.
+13. `0x1C04` query state.
+14. `0x1C02` commit, then wait up to 15 s for the reboot/disconnection.
+
+TWS uses the same erase/program commands after `0x1C14` and `0x1C08`, with
+`0x1C10` start transaction, `0x1C13` write state, `0x1C01` integrity check and
+`0x1C11` TWS commit; it also uses `0x1C12` state query, `0x1C15` cancel,
+`0x1C19` active-mode preparation and `0x1C1B` ping.
+
+`0x0404` erase payload: `[storageType] [4096 LE32] [address LE32]`.
+
+`0x0402` program payload:
+
+```
+[storageType] [pageCount]
+  repeat pageCount:
+    [crc8] [address LE32] [256 bytes data]
+```
+
+Only pages whose 4 KB chunk differs from the device SHA-256 are queued, and
+all-`0xFF` pages are skipped. CRC8 is computed over the 256-byte page with
+initial value `0`.
+
+`0x1C01` integrity check payload: `[1] [recipient] [storageType]`.
+
+`0x1C06` write state payload: `[state LE16]`, with `0x0200` before erase,
+`0x0201` after erase, `0x0210` before program and `0x0211` after program. The
+TWS `0x1C13` variant carries the state twice (4 bytes).
+
+The state machine walks: Idle → AgentQuery → AgentFota → ConnectPartner →
+PartnerQuery → PartnerFota → AgentCommit → Reconnection → Final, and finishes by
+reading the versions again to confirm the update.
+
+**Remaining unknowns**: the exact `0x0433`/`0x0431` payload variants, the role
+byte semantics, the differences between background, active and adaptive mode,
+the package container format, and any signature. Do not implement an unguarded
+writer before these are validated on hardware.
+
+The capture procedure that closes these gaps is described in
+[`docs/fota-validation.md`](docs/fota-validation.md).
+
+### 5.7 Other useful IDs
 
 | ID | Name | Usage |
 |---|---|---|
@@ -733,6 +872,7 @@ commands used in this document.
 | `RACE_FOTA_INTEGRITY_CHECK` | 7169 | 0x1C01 |  |
 | `RACE_FOTA_PARTITION_INFO_QUERY` | 7168 | 0x1C00 |  |
 | `RACE_FOTA_PING` | 7195 | 0x1C1B |  |
+| `RACE_FOTA_QUERY_TRANSMIT_INTERVAL` | 7196 | 0x1C1C | Used by the TWS flow |
 | `RACE_FOTA_QUERY_STATE` | 7172 | 0x1C04 |  |
 | `RACE_FOTA_SET_IR_ONOFF` | 10 | 0x000A |  |
 | `RACE_FOTA_SET_POWER_CONTROL_INFO` | 7 | 0x0007 |  |
@@ -858,6 +998,7 @@ commands used in this document.
 | `0x1200`/`0x1201` | `RaceCmdAncOn/Off` | presence certain, usage not observed |
 | Case `0x000B`/`0x0009` | `RaceId.java` only | unconfirmed |
 | Notification `0x2100/0x0D` | `SettingFragment`, `AirohaMmiMgr` | high in Flycc, depends on YFY firmware |
+| FOTA `0x1C00`–`0x1C1C`, `0x0402`, `0x0404`, `0x0431`, `0x0433` | `AirohaLeaFotaMgr`, `libfota1568` stages | high for the command sequence; package container and signing unknown |
 
 **Limits**:
 
