@@ -44,7 +44,16 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             echo "RELEASE_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "SIGNED=true" >> "$GITHUB_ENV"
+          else
+            echo "SIGNED=false" >> "$GITHUB_ENV"
           fi
+
+      - name: Require signing secrets for tags
+        if: startsWith(github.ref, 'refs/tags/v') && env.SIGNED != 'true'
+        run: |
+          echo "::error::Configure RELEASE_KEYSTORE_BASE64, RELEASE_KEYSTORE_PASSWORD, RELEASE_KEY_ALIAS and RELEASE_KEY_PASSWORD before tagging a release."
+          exit 1
 
       - name: Derive version from tag
         if: startsWith(github.ref, 'refs/tags/v')

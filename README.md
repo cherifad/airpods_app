@@ -96,7 +96,8 @@ signed with a different key. Configure these repository secrets:
 
 Without them the release falls back to the runner's ephemeral debug key: fine
 for a one-off install, but updates across CI runs are rejected. No keystore is
-committed.
+committed. A `v*` tag build fails when the signing secrets are missing, so an
+unsigned or debug-signed release is never published.
 
 At launch the app reads `releases/latest`, compares the tag numerically with
 `BuildConfig.VERSION_NAME`, downloads the APK automatically and opens the system
