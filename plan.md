@@ -81,6 +81,10 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   and exception mapping, with tests.
 - [x] ANC controller: `0x0E06` enable/disable/gain, `0x0901` state read, mode
   mapping and tests; the diagnostics screen shows the live filter and gain.
+- [x] Production connect sheet and live home/popup state; the demo badge and
+  mocked state are gone.
+- [x] Left/right battery mapping through the audio-channel NVKEY (`0xF2B5`).
+- [x] Sonabud branding and adaptive icon.
 - [x] GitHub Actions CI: unit tests, lint, debug/release builds, APK artifacts
   and a GitHub Release on `v*` tags.
 - [x] In-app updater: GitHub Releases check, automatic APK download with
@@ -90,15 +94,13 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
 
 ### 1.2 Current limits
 
-- The UI still uses mocked data: no repository or `ViewModel` connects the GATT
-  layer to the product screens yet.
-- Runtime permissions and device selection exist only in the debug diagnostics
-  screen; there is no production onboarding, bonding or reconnection handling.
+- There is no automatic reconnection, last-device memory, bonding flow or
+  settings screen; the user connects manually from the connect sheet.
 - The system overlay is a debug spike with mocked data; it still needs hardware
   validation and a production permission/service design. Play policy review is
   required if it ships.
-- The GATT transport and initialization sequence are not yet validated on a real
-  AB1565 device.
+- The GATT transport, initialization and ANC writes are not yet validated on a
+  real AB1565 device.
 - Unit tests cover the codec/parser/queue/chunking/initializer; the Android GATT
   layer has no instrumentation test yet.
 - Case battery is not confirmed on hardware.
@@ -336,17 +338,17 @@ device info; disconnection does not crash; codec tests pass.
 
 Goal: replace the mocked battery and connection state.
 
-- [~] Models `BudsConnection`, `BudsBattery`, `BudsDeviceInfo`.
-- [~] `BudsRepository`: connection → init → ready → disconnect cycle.
-- [ ] `BudsViewModel` + `BudsUiState`.
-- [~] Local battery `0x0CD6`.
-- [~] Partner battery through relay `0x0D01` when a peer is present.
+- [x] Models `BudsConnection`, `BudsBattery`, `BudsDeviceInfo`.
+- [x] `BudsRepository`: connection → init → ready → disconnect cycle.
+- [x] `BudsViewModel` + `BudsUiState`.
+- [x] Local battery `0x0CD6`.
+- [x] Partner battery through relay `0x0D01` when a peer is present.
 - [ ] Refresh policy: on connection, every 30 s, on return to foreground.
 - [ ] Automatic reconnection to the last device.
-- [ ] Error handling: Bluetooth off, permission denied, timeout, missing device.
-- [ ] Bind the home screen to the `ViewModel`; progressively remove the mock.
+- [x] Error handling: Bluetooth off, permission denied, timeout, missing device.
+- [x] Bind the home screen to the `ViewModel`; progressively remove the mock.
 - [~] Case battery via `0x2100/0x0D` when available, otherwise unknown.
-- [ ] Tests: battery parsing, relay, state mapping.
+- [x] Tests: battery parsing, relay, state mapping.
 
 **Acceptance criteria**: real battery values displayed, consistent with the
 vendor app, reconnection working, error states visible.
@@ -363,7 +365,7 @@ Goal: control ANC and reflect the firmware state.
   - Off → `filter = 0`;
   - Noise Cancelling → `filter = 1..4`;
   - Transparency → `filter = 9..11`, `mode = 4`.
-- [ ] Optimistic update + rollback when the firmware rejects it.
+- [x] Optimistic update + rollback when the firmware rejects it.
 - [ ] Verify synchronization after a change from another device.
 - [x] Unit tests for the mapping and payloads.
 
@@ -374,7 +376,7 @@ in sync, and no crash occurs when a command fails.
 
 Goal: the complete MVP user experience.
 
-- [ ] Popup fed by `BudsUiState` (name, connection, battery, ANC).
+- [x] Popup fed by `BudsUiState` (name, connection, battery, ANC).
 - [ ] Popup anchored at the bottom, navigation-bar margin, landscape scroll.
 - [x] Debug system-overlay spike: floating Compose card, overlay permission,
   foreground service and notification, with mock data.
@@ -383,9 +385,9 @@ Goal: the complete MVP user experience.
 - [ ] Auto-show policy: first connection of the session, then manual.
 - [ ] Close via X / back / scrim.
 - [ ] Settings screen: auto-show, forget device, diagnostics.
-- [ ] Permission flow with rationale before the request.
-- [ ] Scan screen: device list, RSSI, connection state.
-- [ ] States: loading, disconnected, unsupported device, error.
+- [x] Permission flow with rationale before the request.
+- [x] Scan screen: device list, RSSI, connection state.
+- [x] States: loading, disconnected, unsupported device, error.
 - [ ] Accessibility: descriptions, touch targets, focus order.
 - [ ] Check light/dark, portrait/landscape, large fonts.
 

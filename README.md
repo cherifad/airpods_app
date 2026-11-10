@@ -3,17 +3,15 @@
 > **Language:** English. The app UI is also available in French.
 
 Android companion app built with **Jetpack Compose / Material 3** for Airoha/Flycc
-earbuds. The UI is a polished prototype: a home screen and an **AirPods-inspired
-connection popup** with left/right/case battery levels and ANC control.
+earbuds. The home screen and the **AirPods-inspired connection popup** are fed
+by the live BLE session: connection state, left/right/case battery and ANC.
 
-The UI data is still **mocked** (`BudsState`). The RACE protocol core (frame
-model, codec, stream parser and serialized command queue), the Android GATT
-transport (scan, connection, CCCD, MTU, notifications) and the initialization
-sequence (chip, device type, NVDM, role, peer) are implemented. A debug-only
-diagnostics screen can request permissions, scan, connect and run the sequence;
-wiring the real state into the product UI is the next milestone. The protocol is
-documented in [`PROTOCOL.md`](PROTOCOL.md), and the full roadmap is in
-[`plan.md`](plan.md).
+The RACE protocol core (frame model, codec, stream parser and serialized command
+queue), the GATT transport, the initialization sequence and the battery/ANC
+commands are implemented. A production bottom sheet handles Bluetooth
+permissions, scanning and connection; the debug-only diagnostics screen keeps
+the raw TX/RX log. The protocol is documented in [`PROTOCOL.md`](PROTOCOL.md),
+and the full roadmap is in [`plan.md`](plan.md).
 
 | Light mode | Dark mode |
 |---|---|
@@ -33,8 +31,10 @@ The last row is the **debug system overlay**: the same card rendered by
 - iOS-like battery glyphs with animated fill, green/amber/red depending on level.
 - Segmented ANC control (Noise Cancelling / Transparency / Off), shared with the home screen.
 - Material 3 light/dark theme, edge-to-edge, custom typography and shapes.
-- Popup shown automatically 700 ms after launch; reopened from the hero card or the button.
+- Popup shown automatically when the earbuds become ready; reopened from the hero card or the button.
 - Dismissed with the close button, the system back gesture or a tap outside.
+- Production connect sheet: Bluetooth rationale, permissions, scan and device picker.
+- Live connection, left/right/case battery and ANC state; unknown values stay “—” instead of a fake level.
 - Bilingual UI: **English by default**, **French** through `values-fr`, with Android 13+
   per-app language support.
 - Debug-only BLE diagnostics: runtime permissions, filtered scan, connection,
@@ -136,24 +136,27 @@ app/src/main/java/com/airbuds/companion/
 │       └── AppVersion.kt        # numeric tag comparison
 ├── domain/
 │   └── model/
-│       ├── BudsBattery.kt       # agent/partner levels, unknown-safe
+│       ├── BudsBattery.kt       # left/right/case levels, unknown-safe
 │       ├── BudsConnection.kt    # disconnected → connecting → ready
 │       └── BudsError.kt         # product-level error model
 ├── model/
-│   ├── AncMode.kt               # Noise Cancelling / Transparency / Off
-│   └── BudsState.kt             # mocked state (name, battery, ANC, connection)
+│   └── AncMode.kt               # Noise Cancelling / Transparency / Off
 ├── overlay/
 │   ├── BudsOverlayService.kt    # debug FGS + WindowManager overlay
 │   ├── OverlayLifecycleOwner.kt # lifecycle owner for the ComposeView
 │   └── OverlayPermission.kt     # SYSTEM_ALERT_WINDOW check and settings intent
 └── ui/
     ├── AncModeLabels.kt         # localized ANC label mapping
-    ├── BudsApp.kt               # shared state, auto-show, blur, BackHandler
+    ├── BudsApp.kt               # session, auto-show, blur, BackHandler
+    ├── BudsErrorText.kt         # error model → localized message
+    ├── BudsUiState.kt           # connection, scan, battery, ANC UI state
+    ├── BudsViewModel.kt         # transport + repository + scan/connect/ANC
+    ├── ConnectSheet.kt          # permissions, scan and device picker
     ├── DiagnosticsScreen.kt     # debug-only BLE diagnostics UI
     ├── DiagnosticsViewModel.kt  # permissions, scan, connect, init, logs
     ├── HomeScreen.kt            # header, hero card, controls, battery
     ├── BudsPopup.kt             # bottom popup + scrim + animations
-    ├── OverlayPopupContent.kt   # mock-state card rendered in the overlay
+    ├── OverlayPopupContent.kt   # debug mock card rendered in the overlay
     ├── UpdateDialog.kt          # in-app update progress/install dialog
     ├── UpdateViewModel.kt       # check, auto-download, install state
     ├── components/
@@ -216,7 +219,7 @@ System overlay (debug):
    diagnostics screen.
 2. Bind the UI to real commands: battery `0x0CD6`, ANC `0x0E06` + state `0x0901`,
    TWS relay `0x0D01`.
-3. Add the repository and `ViewModel`, then replace `BudsState` with real state.
+3. Add reconnection, last-device memory and settings.
 4. Turn the diagnostics screen into the production permission and device-picker
    flow.
 
@@ -233,8 +236,9 @@ See [`plan.md`](plan.md) for the complete milestone breakdown.
   everywhere.
 - In **debug builds**, “Diagnostics (debug)” on the home screen requests the
   BLE permissions, scans (with or without the Airoha service filter), connects,
-  runs the initialization and shows the RACE log. The production UI is still
-  mocked.
-- Product screenshots were captured on the `flycc` AVD (API 30, 1080×2340); the
-  system-overlay screenshots on an API 35 emulator (1080×2400).
+  runs the initialization and shows the raw RACE log. The release build uses the
+  production connect sheet instead.
+- Product screenshots were captured on the `flycc` AVD (API 30, 1080×2340) before
+  the session wiring; the system-overlay screenshots on an API 35 emulator
+  (1080×2400).
 - English is the primary project language; the app UI also ships a French localization.
