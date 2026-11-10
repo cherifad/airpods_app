@@ -36,6 +36,7 @@ fun AncSelector(
     selected: AncMode,
     onSelect: (AncMode) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val scheme = MaterialTheme.colorScheme
     val selectedContainer = if (scheme.surface.luminance() < 0.5f) {
@@ -46,7 +47,7 @@ fun AncSelector(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        color = scheme.surfaceVariant.copy(alpha = 0.55f),
+        color = scheme.surfaceVariant.copy(alpha = if (enabled) 0.55f else 0.3f),
     ) {
         Row(
             modifier = Modifier
@@ -73,6 +74,7 @@ fun AncSelector(
                         .background(container)
                         .selectable(
                             selected = active,
+                            enabled = enabled,
                             role = Role.RadioButton,
                             onClick = { onSelect(mode) },
                         )
@@ -81,7 +83,7 @@ fun AncSelector(
                 ) {
                     Text(
                         text = stringResource(mode.labelRes()),
-                        color = content,
+                        color = content.copy(alpha = if (enabled) 1f else 0.5f),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

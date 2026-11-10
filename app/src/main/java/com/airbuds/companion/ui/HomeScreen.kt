@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,21 +39,21 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.airbuds.companion.R
 import com.airbuds.companion.model.AncMode
-import com.airbuds.companion.model.BudsState
 import com.airbuds.companion.ui.components.AncSelector
 import com.airbuds.companion.ui.components.BatteryRow
 import com.airbuds.companion.ui.components.BudsIllustration
+import com.airbuds.companion.ui.theme.AccentAmber
 import com.airbuds.companion.ui.theme.AccentGreen
 import com.airbuds.companion.ui.theme.AccentRed
 
 @Composable
 fun HomeScreen(
-    state: BudsState,
+    state: BudsUiState,
+    onPrimaryAction: () -> Unit,
     onAncChange: (AncMode) -> Unit,
-    onShowPopup: () -> Unit,
+    onDisconnect: () -> Unit,
     onOpenDiagnostics: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -67,9 +66,17 @@ fun HomeScreen(
             .padding(horizontal = 20.dp),
     ) {
         Spacer(Modifier.height(14.dp))
-        HomeHeader(state)
+        HomeHeader(state = state, onPrimaryAction = onPrimaryAction)
+        state.visibleError?.let { error ->
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = stringResource(error.messageRes()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
         Spacer(Modifier.height(24.dp))
-        HeroCard(state = state, onShowPopup = onShowPopup)
+        HeroCard(state = state, onPrimaryAction = onPrimaryAction)
         Spacer(Modifier.height(28.dp))
         SectionTitle(stringResource(R.string.section_controls))
         Spacer(Modifier.height(12.dp))
@@ -80,7 +87,7 @@ fun HomeScreen(
         BatteryCard(state = state)
         Spacer(Modifier.height(28.dp))
         Button(
-            onClick = onShowPopup,
+            onClick = onPrimaryAction,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
@@ -88,18 +95,20 @@ fun HomeScreen(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
         ) {
             Text(
-                text = stringResource(R.string.show_popup),
+                text = stringResource(
+                    if (state.connected) R.string.show_popup else R.string.connect_cta,
+                ),
                 style = MaterialTheme.typography.labelLarge,
             )
         }
-        Spacer(Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.prototype_footer),
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-        )
+        if (state.connected) {
+            TextButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.connect_disconnect),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        }
         if (onOpenDiagnostics != null) {
             TextButton(
                 onClick = onOpenDiagnostics,
@@ -116,7 +125,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeHeader(state: BudsState) {
+private fun HomeHeader(state: BudsUiState, onPrimaryAction: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(
@@ -126,32 +135,25 @@ private fun HomeHeader(state: BudsState) {
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = "${state.name} · ${state.model}",
+                text = state.deviceName ?: stringResource(R.string.status_not_connected),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-        ) {
-            Text(
-                text = stringResource(R.string.demo_badge),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                letterSpacing = 1.sp,
-            )
-        }
+        ConnectionChip(
+            connected = state.connected,
+            busy = state.busy,
+            onClick = onPrimaryAction,
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HeroCard(state: BudsState, onShowPopup: () -> Unit) {
+private fun HeroCard(state: BudsUiState, onPrimaryAction: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     Surface(
-        onClick = onShowPopup,
+        onClick = onPrimaryAction,
         modifier = Modifier
             .fillMaxWidth()
             .height(310.dp),
@@ -171,15 +173,22 @@ private fun HeroCard(state: BudsState, onShowPopup: () -> Unit) {
             Column(Modifier.fillMaxSize().padding(22.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(text = state.name, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            text = state.deviceName ?: stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.titleLarge,
+                        )
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            text = state.model,
+                            text = state.chipName ?: stringResource(R.string.status_not_connected),
                             style = MaterialTheme.typography.labelMedium,
                             color = scheme.onSurfaceVariant,
                         )
                     }
-                    ConnectionChip(connected = state.connected)
+                    ConnectionChip(
+                        connected = state.connected,
+                        busy = state.busy,
+                        onClick = onPrimaryAction,
+                    )
                 }
                 Box(
                     modifier = Modifier
@@ -195,7 +204,9 @@ private fun HeroCard(state: BudsState, onShowPopup: () -> Unit) {
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = stringResource(R.string.see_popup),
+                        text = stringResource(
+                            if (state.connected) R.string.see_popup else R.string.connect_cta,
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         color = scheme.primary,
                     )
@@ -213,7 +224,7 @@ private fun HeroCard(state: BudsState, onShowPopup: () -> Unit) {
 }
 
 @Composable
-private fun ControlsCard(state: BudsState, onAncChange: (AncMode) -> Unit) {
+private fun ControlsCard(state: BudsUiState, onAncChange: (AncMode) -> Unit) {
     Surface(
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -230,25 +241,39 @@ private fun ControlsCard(state: BudsState, onAncChange: (AncMode) -> Unit) {
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = stringResource(state.anc.labelRes()),
+                    text = if (state.connected && state.ancAvailable) {
+                        stringResource(state.anc.labelRes())
+                    } else {
+                        stringResource(R.string.status_not_connected)
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                text = stringResource(R.string.noise_control_subtitle),
+                text = stringResource(
+                    if (state.connected && state.ancAvailable) {
+                        R.string.noise_control_subtitle
+                    } else {
+                        R.string.anc_unavailable
+                    },
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(16.dp))
-            AncSelector(selected = state.anc, onSelect = onAncChange)
+            AncSelector(
+                selected = state.anc,
+                onSelect = onAncChange,
+                enabled = state.connected && state.ancAvailable,
+            )
         }
     }
 }
 
 @Composable
-private fun BatteryCard(state: BudsState) {
+private fun BatteryCard(state: BudsUiState) {
     Surface(
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -260,26 +285,34 @@ private fun BatteryCard(state: BudsState) {
         Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
             BatteryRow(
                 label = stringResource(R.string.battery_left),
-                level = state.leftBattery,
+                level = state.battery.leftPercent,
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             BatteryRow(
                 label = stringResource(R.string.battery_right),
-                level = state.rightBattery,
+                level = state.battery.rightPercent,
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             BatteryRow(
                 label = stringResource(R.string.battery_case),
-                level = state.caseBattery,
+                level = state.battery.casePercent,
             )
         }
     }
 }
 
 @Composable
-private fun ConnectionChip(connected: Boolean) {
-    val color = if (connected) AccentGreen else AccentRed
-    Surface(shape = CircleShape, color = color.copy(alpha = 0.12f)) {
+private fun ConnectionChip(connected: Boolean, busy: Boolean, onClick: () -> Unit) {
+    val color = when {
+        busy -> AccentAmber
+        connected -> AccentGreen
+        else -> AccentRed
+    }
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = color.copy(alpha = 0.12f),
+    ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -293,7 +326,11 @@ private fun ConnectionChip(connected: Boolean) {
             )
             Text(
                 text = stringResource(
-                    if (connected) R.string.status_connected else R.string.status_disconnected,
+                    when {
+                        busy -> R.string.status_connecting
+                        connected -> R.string.status_connected
+                        else -> R.string.status_not_connected
+                    },
                 ),
                 style = MaterialTheme.typography.labelSmall,
                 color = color,

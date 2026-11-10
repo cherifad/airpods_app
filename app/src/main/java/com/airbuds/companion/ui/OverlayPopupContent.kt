@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.airbuds.companion.model.AncMode
-import com.airbuds.companion.model.BudsState
 
 /**
  * Content hosted in the system overlay window.
@@ -21,7 +20,7 @@ import com.airbuds.companion.model.BudsState
  */
 @Composable
 fun OverlayPopupContent(
-    state: BudsState,
+    state: BudsUiState,
     onAncChange: (AncMode) -> Unit,
     onDismiss: () -> Unit,
 ) {

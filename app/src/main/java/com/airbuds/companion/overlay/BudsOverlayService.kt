@@ -26,14 +26,17 @@ import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.airbuds.companion.MainActivity
 import com.airbuds.companion.R
-import com.airbuds.companion.model.BudsState
+import com.airbuds.companion.domain.model.BudsBattery
+import com.airbuds.companion.domain.model.BudsConnection
+import com.airbuds.companion.model.AncMode
+import com.airbuds.companion.ui.BudsUiState
 import com.airbuds.companion.ui.OverlayPopupContent
 import com.airbuds.companion.ui.theme.BudsTheme
 
 /**
  * Debug foreground service that hosts the popup in a system overlay.
  *
- * This is a spike: the card uses mocked [BudsState] so the window, permission
+ * This is a spike: the card uses mocked [BudsUiState] so the window, permission
  * and notification path can be validated on a real device before wiring the
  * BLE state.
  */
@@ -96,7 +99,22 @@ class BudsOverlayService : Service() {
             )
             setContent {
                 BudsTheme {
-                    var state by remember { mutableStateOf(BudsState()) }
+                    var state by remember {
+                        mutableStateOf(
+                            BudsUiState(
+                                connection = BudsConnection.Ready("overlay"),
+                                deviceName = "Buds Pro",
+                                chipName = "AB1565",
+                                battery = BudsBattery(
+                                    leftPercent = 82,
+                                    rightPercent = 79,
+                                    casePercent = 64,
+                                ),
+                                anc = AncMode.NoiseCancelling,
+                                ancAvailable = true,
+                            ),
+                        )
+                    }
                     OverlayPopupContent(
                         state = state,
                         onAncChange = { state = state.copy(anc = it) },

@@ -50,12 +50,12 @@ fun batteryColor(level: Int): Color = when {
  * glyph enters composition, which makes the popup feel alive on every open.
  */
 @Composable
-fun BatteryPill(level: Int, modifier: Modifier = Modifier) {
+fun BatteryPill(level: Int?, modifier: Modifier = Modifier) {
     val outline = MaterialTheme.colorScheme.outline
-    val fillColor = batteryColor(level)
+    val fillColor = level?.let { batteryColor(it) } ?: MaterialTheme.colorScheme.outlineVariant
     var target by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(level) {
-        target = (level / 100f).coerceIn(0f, 1f)
+        target = ((level ?: 0) / 100f).coerceIn(0f, 1f)
     }
     val fill by animateFloatAsState(
         targetValue = target,
@@ -105,8 +105,8 @@ fun BatteryPill(level: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun BatteryRow(label: String, level: Int, modifier: Modifier = Modifier) {
-    val color = batteryColor(level)
+fun BatteryRow(label: String, level: Int?, modifier: Modifier = Modifier) {
+    val color = level?.let { batteryColor(it) } ?: MaterialTheme.colorScheme.outlineVariant
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -129,14 +129,15 @@ fun BatteryRow(label: String, level: Int, modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth((level / 100f).coerceIn(0f, 1f))
+                    .fillMaxWidth(((level ?: 0) / 100f).coerceIn(0f, 1f))
                     .clip(CircleShape)
                     .background(color),
             )
         }
         Spacer(Modifier.width(12.dp))
         Text(
-            text = stringResource(R.string.battery_percent, level),
+            text = level?.let { stringResource(R.string.battery_percent, it) }
+                ?: stringResource(R.string.battery_unknown),
             modifier = Modifier.width(46.dp),
             textAlign = TextAlign.End,
             style = MaterialTheme.typography.labelLarge,

@@ -3,12 +3,10 @@
     <string name="app_name">Sonabud</string>
 
     <string name="home_title">Mes écouteurs</string>
-    <string name="demo_badge">DÉMO</string>
     <string name="section_controls">Contrôles</string>
     <string name="section_battery">Batterie</string>
     <string name="show_popup">Afficher le popup</string>
     <string name="see_popup">Voir le popup</string>
-    <string name="prototype_footer">Prototype · batteries et ANC simulés</string>
 
     <string name="noise_control_title">Réduction de bruit</string>
     <string name="noise_control_subtitle">Choisissez la façon dont vous entendez le monde.</string>
@@ -68,6 +66,26 @@
     <string name="diagnostics_none">Aucun</string>
     <string name="diagnostics_logs">Journal RACE</string>
     <string name="diagnostics_no_logs">Aucun trafic RACE pour l\'instant.</string>
+    <string name="connect_title">Connecter les écouteurs</string>
+    <string name="connect_rationale">Sonabud a besoin du Bluetooth pour trouver et connecter vos écouteurs. Rien n\'est envoyé sur le réseau.</string>
+    <string name="connect_grant">Autoriser le Bluetooth</string>
+    <string name="connect_scan">Scanner</string>
+    <string name="connect_scanning">Scan en cours…</string>
+    <string name="connect_no_devices">Aucun écouteur trouvé. Sortez-les du boîtier et réessayez.</string>
+    <string name="connect_connecting">Connexion…</string>
+    <string name="connect_cta">Connecter les écouteurs</string>
+    <string name="connect_disconnect">Déconnecter</string>
+    <string name="battery_unknown">—</string>
+    <string name="anc_unavailable">Connectez vos écouteurs pour changer le mode d\'écoute.</string>
+    <string name="status_not_connected">Non connecté</string>
+    <string name="status_connecting">Connexion…</string>
+    <string name="status_initializing">Initialisation…</string>
+    <string name="error_bluetooth_disabled">Le Bluetooth est désactivé.</string>
+    <string name="error_permission_denied">L\'autorisation Bluetooth est requise.</string>
+    <string name="error_timeout">Les écouteurs ne répondent pas. Réessayez.</string>
+    <string name="error_protocol">Les écouteurs ont renvoyé une réponse inattendue.</string>
+    <string name="error_transport">La connexion Bluetooth a échoué.</string>
+    <string name="error_unknown">Une erreur est survenue.</string>
 
     <string name="overlay_title">Overlay système (debug)</string>
     <string name="overlay_description">Carte flottante par-dessus les autres apps. Ce spike utilise des données simulées.</string>

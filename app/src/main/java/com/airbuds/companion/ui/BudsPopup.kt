@@ -53,11 +53,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.airbuds.companion.R
 import com.airbuds.companion.model.AncMode
-import com.airbuds.companion.model.BudsState
 import com.airbuds.companion.ui.components.AncSelector
 import com.airbuds.companion.ui.components.BatteryPill
 import com.airbuds.companion.ui.components.BudsIllustration
 import com.airbuds.companion.ui.theme.AccentGreen
+import com.airbuds.companion.ui.theme.AccentRed
 
 /**
  * In-app "open the case" popup: a floating card anchored above the navigation
@@ -67,7 +67,7 @@ import com.airbuds.companion.ui.theme.AccentGreen
 @Composable
 fun BudsPopup(
     visible: Boolean,
-    state: BudsState,
+    state: BudsUiState,
     onAncChange: (AncMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -127,7 +127,7 @@ fun BudsPopup(
 
 @Composable
 internal fun BudsPopupCard(
-    state: BudsState,
+    state: BudsUiState,
     onAncChange: (AncMode) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -158,14 +158,17 @@ internal fun BudsPopupCard(
         ) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f)) {
-                    Text(text = state.name, style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        text = state.deviceName ?: stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
                     Spacer(Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(AccentGreen),
+                                .background(if (state.connected) AccentGreen else AccentRed),
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
@@ -177,7 +180,7 @@ internal fun BudsPopupCard(
                                 },
                             ),
                             style = MaterialTheme.typography.labelMedium,
-                            color = AccentGreen,
+                            color = if (state.connected) AccentGreen else AccentRed,
                         )
                     }
                 }
@@ -220,17 +223,17 @@ internal fun BudsPopupCard(
             ) {
                 BatteryColumn(
                     label = stringResource(R.string.battery_left_short),
-                    level = state.leftBattery,
+                    level = state.battery.leftPercent,
                     modifier = Modifier.weight(1f),
                 )
                 BatteryColumn(
                     label = stringResource(R.string.battery_right_short),
-                    level = state.rightBattery,
+                    level = state.battery.rightPercent,
                     modifier = Modifier.weight(1f),
                 )
                 BatteryColumn(
                     label = stringResource(R.string.battery_case),
-                    level = state.caseBattery,
+                    level = state.battery.casePercent,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -244,14 +247,18 @@ internal fun BudsPopupCard(
                 color = scheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(10.dp))
-            AncSelector(selected = state.anc, onSelect = onAncChange)
+            AncSelector(
+                selected = state.anc,
+                onSelect = onAncChange,
+                enabled = state.connected && state.ancAvailable,
+            )
             Spacer(Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-private fun BatteryColumn(label: String, level: Int, modifier: Modifier = Modifier) {
+private fun BatteryColumn(label: String, level: Int?, modifier: Modifier = Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = label,
@@ -262,7 +269,8 @@ private fun BatteryColumn(label: String, level: Int, modifier: Modifier = Modifi
         BatteryPill(level = level)
         Spacer(Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.battery_percent, level),
+            text = level?.let { stringResource(R.string.battery_percent, it) }
+                ?: stringResource(R.string.battery_unknown),
             style = MaterialTheme.typography.titleMedium,
         )
     }

@@ -21,13 +21,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.airbuds.companion.model.BudsState
-import com.airbuds.companion.model.BudsStateSaver
 import kotlinx.coroutines.delay
 
 @Composable
 fun BudsApp() {
-    var state by rememberSaveable(stateSaver = BudsStateSaver) { mutableStateOf(BudsState()) }
+    val budsViewModel: BudsViewModel = viewModel()
+    val state by budsViewModel.uiState.collectAsStateWithLifecycle()
+
     var popupVisible by rememberSaveable { mutableStateOf(false) }
     var autoShown by rememberSaveable { mutableStateOf(false) }
     var showDiagnostics by rememberSaveable { mutableStateOf(false) }
@@ -45,10 +45,10 @@ fun BudsApp() {
         return
     }
 
-    // First launch plays the "case just opened" moment automatically.
-    LaunchedEffect(Unit) {
-        if (!autoShown) {
-            delay(700)
+    // Play the "case just opened" moment once, when the earbuds are ready.
+    LaunchedEffect(state.connected) {
+        if (state.connected && !autoShown) {
+            delay(400)
             popupVisible = true
             autoShown = true
         }
@@ -75,8 +75,18 @@ fun BudsApp() {
     ) {
         HomeScreen(
             state = state,
-            onAncChange = { state = state.copy(anc = it) },
-            onShowPopup = { popupVisible = true },
+            onPrimaryAction = {
+                if (state.connected) {
+                    popupVisible = true
+                } else {
+                    budsViewModel.showConnectSheet()
+                }
+            },
+            onAncChange = budsViewModel::setAnc,
+            onDisconnect = {
+                popupVisible = false
+                budsViewModel.disconnect()
+            },
             onOpenDiagnostics = if (debuggable) {
                 { showDiagnostics = true }
             } else {
@@ -87,8 +97,15 @@ fun BudsApp() {
         BudsPopup(
             visible = popupVisible,
             state = state,
-            onAncChange = { state = state.copy(anc = it) },
+            onAncChange = budsViewModel::setAnc,
             onDismiss = { popupVisible = false },
+        )
+        ConnectSheet(
+            visible = state.connectSheetVisible,
+            state = state,
+            onDismiss = budsViewModel::hideConnectSheet,
+            onScan = budsViewModel::scan,
+            onConnect = { device -> budsViewModel.connect(device.device) },
         )
         UpdateDialog(
             state = updateState,

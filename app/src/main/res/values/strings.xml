@@ -3,12 +3,10 @@
     <string name="app_name">Sonabud</string>
 
     <string name="home_title">My earbuds</string>
-    <string name="demo_badge">DEMO</string>
     <string name="section_controls">Controls</string>
     <string name="section_battery">Battery</string>
     <string name="show_popup">Show popup</string>
     <string name="see_popup">Open popup</string>
-    <string name="prototype_footer">Prototype · simulated battery and ANC</string>
 
     <string name="noise_control_title">Noise control</string>
     <string name="noise_control_subtitle">Choose how you hear the world.</string>
@@ -68,6 +66,26 @@
     <string name="diagnostics_none">None</string>
     <string name="diagnostics_logs">RACE log</string>
     <string name="diagnostics_no_logs">No RACE traffic yet.</string>
+    <string name="connect_title">Connect earbuds</string>
+    <string name="connect_rationale">Sonabud needs Bluetooth access to find and connect your earbuds. Nothing is sent to the network.</string>
+    <string name="connect_grant">Allow Bluetooth</string>
+    <string name="connect_scan">Scan</string>
+    <string name="connect_scanning">Scanning…</string>
+    <string name="connect_no_devices">No earbuds found. Take them out of the case and try again.</string>
+    <string name="connect_connecting">Connecting…</string>
+    <string name="connect_cta">Connect earbuds</string>
+    <string name="connect_disconnect">Disconnect</string>
+    <string name="battery_unknown">—</string>
+    <string name="anc_unavailable">Connect your earbuds to change the listening mode.</string>
+    <string name="status_not_connected">Not connected</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_initializing">Initializing…</string>
+    <string name="error_bluetooth_disabled">Bluetooth is disabled.</string>
+    <string name="error_permission_denied">Bluetooth permission is required.</string>
+    <string name="error_timeout">The earbuds did not answer. Try again.</string>
+    <string name="error_protocol">The earbuds returned an unexpected response.</string>
+    <string name="error_transport">Bluetooth connection failed.</string>
+    <string name="error_unknown">Something went wrong.</string>
 
     <string name="overlay_title">System overlay (debug)</string>
     <string name="overlay_description">Floating card over other apps. This spike uses mock data.</string>
