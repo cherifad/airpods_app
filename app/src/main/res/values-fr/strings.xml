@@ -79,7 +79,11 @@
     <string name="connect_cta">Connecter les écouteurs</string>
     <string name="connect_disconnect">Déconnecter</string>
     <string name="battery_unknown">—</string>
+    <string name="battery_earbud_one">Écouteur 1</string>
+    <string name="battery_earbud_two">Écouteur 2</string>
+    <string name="battery_unavailable">Batterie indisponible — appuyez pour rafraîchir</string>
     <string name="anc_unavailable">Connectez vos écouteurs pour changer le mode d\'écoute.</string>
+    <string name="anc_unavailable_connected">État ANC indisponible. Choisissez un mode pour l\'appliquer.</string>
     <string name="status_not_connected">Non connecté</string>
     <string name="status_connecting">Connexion…</string>
     <string name="status_initializing">Initialisation…</string>

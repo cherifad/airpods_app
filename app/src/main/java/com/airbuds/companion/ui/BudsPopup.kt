@@ -222,13 +222,33 @@ internal fun BudsPopupCard(
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 BatteryColumn(
-                    label = stringResource(R.string.battery_left_short),
-                    level = state.battery.leftPercent,
+                    label = stringResource(
+                        if (state.battery.leftPercent == null &&
+                            state.battery.rightPercent == null &&
+                            (state.battery.agentPercent != null ||
+                                state.battery.partnerPercent != null)
+                        ) {
+                            R.string.battery_earbud_one
+                        } else {
+                            R.string.battery_left_short
+                        },
+                    ),
+                    level = state.battery.leftPercent ?: state.battery.agentPercent,
                     modifier = Modifier.weight(1f),
                 )
                 BatteryColumn(
-                    label = stringResource(R.string.battery_right_short),
-                    level = state.battery.rightPercent,
+                    label = stringResource(
+                        if (state.battery.leftPercent == null &&
+                            state.battery.rightPercent == null &&
+                            (state.battery.agentPercent != null ||
+                                state.battery.partnerPercent != null)
+                        ) {
+                            R.string.battery_earbud_two
+                        } else {
+                            R.string.battery_right_short
+                        },
+                    ),
+                    level = state.battery.rightPercent ?: state.battery.partnerPercent,
                     modifier = Modifier.weight(1f),
                 )
                 BatteryColumn(
@@ -250,7 +270,7 @@ internal fun BudsPopupCard(
             AncSelector(
                 selected = state.anc,
                 onSelect = onAncChange,
-                enabled = state.connected && state.ancAvailable,
+                enabled = state.connected,
             )
             Spacer(Modifier.height(8.dp))
         }

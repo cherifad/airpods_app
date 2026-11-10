@@ -11,9 +11,15 @@ data class BudsBattery(
     val leftPercent: Int? = null,
     val rightPercent: Int? = null,
     val casePercent: Int? = null,
+    val agentPercent: Int? = null,
+    val partnerPercent: Int? = null,
 ) {
     val isKnown: Boolean
-        get() = leftPercent != null || rightPercent != null || casePercent != null
+        get() = leftPercent != null ||
+            rightPercent != null ||
+            casePercent != null ||
+            agentPercent != null ||
+            partnerPercent != null
 
     companion object {
         val Unknown = BudsBattery()

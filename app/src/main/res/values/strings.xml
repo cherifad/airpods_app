@@ -79,7 +79,11 @@
     <string name="connect_cta">Connect earbuds</string>
     <string name="connect_disconnect">Disconnect</string>
     <string name="battery_unknown">—</string>
+    <string name="battery_earbud_one">Earbud 1</string>
+    <string name="battery_earbud_two">Earbud 2</string>
+    <string name="battery_unavailable">Battery unavailable — tap to refresh</string>
     <string name="anc_unavailable">Connect your earbuds to change the listening mode.</string>
+    <string name="anc_unavailable_connected">ANC state unavailable. Pick a mode to apply it.</string>
     <string name="status_not_connected">Not connected</string>
     <string name="status_connecting">Connecting…</string>
     <string name="status_initializing">Initializing…</string>

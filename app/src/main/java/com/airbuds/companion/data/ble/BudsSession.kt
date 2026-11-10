@@ -3,6 +3,7 @@ package com.airbuds.companion.data.ble
 import com.airbuds.companion.domain.model.BudsBattery
 import com.airbuds.companion.model.AncMode
 import kotlinx.coroutines.CancellationException
+import android.util.Log
 
 /** Result of one initialization + battery read cycle. */
 data class BudsSnapshot(
@@ -47,14 +48,29 @@ class BudsSession(private val executor: RaceCommandExecutor) {
         info: RaceDeviceInfo,
         agentIsRight: Boolean? = null,
     ): BudsBattery {
-        val agent = readPercent { batteryReader.readLocal() }
+        val agent = readPercent("agent") { batteryReader.readLocal() }
         val partner = info.peerId?.let { peerId ->
-            readPercent { batteryReader.readPartner(peerId) }
+            readPercent("partner") { batteryReader.readPartner(peerId) }
         }
         return when (agentIsRight) {
-            true -> BudsBattery(leftPercent = partner, rightPercent = agent)
-            false -> BudsBattery(leftPercent = agent, rightPercent = partner)
-            null -> BudsBattery.Unknown
+            true -> BudsBattery(
+                leftPercent = partner,
+                rightPercent = agent,
+                agentPercent = agent,
+                partnerPercent = partner,
+            )
+
+            false -> BudsBattery(
+                leftPercent = agent,
+                rightPercent = partner,
+                agentPercent = agent,
+                partnerPercent = partner,
+            )
+
+            null -> BudsBattery(
+                agentPercent = agent,
+                partnerPercent = partner,
+            )
         }
     }
 
@@ -69,16 +85,21 @@ class BudsSession(private val executor: RaceCommandExecutor) {
             if (data.size >= 2) data[1].toInt() == 2 else null
         } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.w(TAG, "Audio-channel read failed", error)
             null
         }
 
-    private suspend fun readPercent(read: suspend () -> EarbudBattery): Int? =
+    private suspend fun readPercent(
+        label: String,
+        read: suspend () -> EarbudBattery,
+    ): Int? =
         try {
             read().percent
         } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.w(TAG, "$label battery read failed", error)
             null
         }
 
@@ -88,12 +109,17 @@ class BudsSession(private val executor: RaceCommandExecutor) {
             ancController.readState()
         } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.w(TAG, "ANC state read failed", error)
             null
         }
 
     /** Applies a listening mode; throws when the firmware rejects it. */
     suspend fun setAnc(mode: AncMode) {
         ancController.setMode(mode)
+    }
+
+    private companion object {
+        const val TAG = "BudsSession"
     }
 }

@@ -470,6 +470,14 @@ private fun BatterySection(battery: BudsBattery) {
     battery.rightPercent?.let {
         InfoRow(stringResource(R.string.diagnostics_battery_right), "$it %")
     }
+    if (battery.leftPercent == null && battery.rightPercent == null) {
+        battery.agentPercent?.let {
+            InfoRow(stringResource(R.string.diagnostics_battery_agent), "$it %")
+        }
+        battery.partnerPercent?.let {
+            InfoRow(stringResource(R.string.diagnostics_battery_partner), "$it %")
+        }
+    }
     battery.casePercent?.let {
         InfoRow(stringResource(R.string.diagnostics_battery_case), "$it %")
     }

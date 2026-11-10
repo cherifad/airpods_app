@@ -54,6 +54,7 @@ fun HomeScreen(
     onPrimaryAction: () -> Unit,
     onAncChange: (AncMode) -> Unit,
     onDisconnect: () -> Unit,
+    onRefresh: () -> Unit,
     onOpenDiagnostics: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -85,6 +86,14 @@ fun HomeScreen(
         SectionTitle(stringResource(R.string.section_battery))
         Spacer(Modifier.height(12.dp))
         BatteryCard(state = state)
+        if (state.connected && !state.battery.isKnown) {
+            TextButton(onClick = onRefresh, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.battery_unavailable),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        }
         Spacer(Modifier.height(28.dp))
         Button(
             onClick = onPrimaryAction,
@@ -241,10 +250,10 @@ private fun ControlsCard(state: BudsUiState, onAncChange: (AncMode) -> Unit) {
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = if (state.connected && state.ancAvailable) {
-                        stringResource(state.anc.labelRes())
-                    } else {
-                        stringResource(R.string.status_not_connected)
+                    text = when {
+                        !state.connected -> stringResource(R.string.status_not_connected)
+                        state.ancAvailable -> stringResource(state.anc.labelRes())
+                        else -> stringResource(R.string.battery_unknown)
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
@@ -253,10 +262,10 @@ private fun ControlsCard(state: BudsUiState, onAncChange: (AncMode) -> Unit) {
             Spacer(Modifier.height(6.dp))
             Text(
                 text = stringResource(
-                    if (state.connected && state.ancAvailable) {
-                        R.string.noise_control_subtitle
-                    } else {
-                        R.string.anc_unavailable
+                    when {
+                        !state.connected -> R.string.anc_unavailable
+                        !state.ancAvailable -> R.string.anc_unavailable_connected
+                        else -> R.string.noise_control_subtitle
                     },
                 ),
                 style = MaterialTheme.typography.bodySmall,
@@ -266,7 +275,7 @@ private fun ControlsCard(state: BudsUiState, onAncChange: (AncMode) -> Unit) {
             AncSelector(
                 selected = state.anc,
                 onSelect = onAncChange,
-                enabled = state.connected && state.ancAvailable,
+                enabled = state.connected,
             )
         }
     }
@@ -283,19 +292,34 @@ private fun BatteryCard(state: BudsUiState) {
         ),
     ) {
         Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
-            BatteryRow(
-                label = stringResource(R.string.battery_left),
-                level = state.battery.leftPercent,
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            BatteryRow(
-                label = stringResource(R.string.battery_right),
-                level = state.battery.rightPercent,
-            )
+            val battery = state.battery
+            val hasSides = battery.leftPercent != null || battery.rightPercent != null
+            val hasRoles = battery.agentPercent != null || battery.partnerPercent != null
+            if (hasSides || !hasRoles) {
+                BatteryRow(
+                    label = stringResource(R.string.battery_left),
+                    level = battery.leftPercent,
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                BatteryRow(
+                    label = stringResource(R.string.battery_right),
+                    level = battery.rightPercent,
+                )
+            } else {
+                BatteryRow(
+                    label = stringResource(R.string.battery_earbud_one),
+                    level = battery.agentPercent,
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                BatteryRow(
+                    label = stringResource(R.string.battery_earbud_two),
+                    level = battery.partnerPercent,
+                )
+            }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             BatteryRow(
                 label = stringResource(R.string.battery_case),
-                level = state.battery.casePercent,
+                level = battery.casePercent,
             )
         }
     }

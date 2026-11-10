@@ -104,6 +104,7 @@ fun BudsApp() {
                 popupVisible = false
                 budsViewModel.disconnect()
             },
+            onRefresh = budsViewModel::refresh,
             onOpenDiagnostics = if (debuggable) {
                 { showDiagnostics = true }
             } else {

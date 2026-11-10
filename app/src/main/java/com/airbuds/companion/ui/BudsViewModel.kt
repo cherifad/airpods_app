@@ -18,6 +18,7 @@ import com.airbuds.companion.domain.model.BudsConnection
 import com.airbuds.companion.model.AncMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,16 +54,38 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
             repository.connection.collect { connection ->
                 _uiState.update { it.copy(connection = connection) }
                 if (connection is BudsConnection.Ready) {
+                    Log.i(TAG, "Ready: $connection")
                     readAnc()
+                    if (!_uiState.value.battery.isKnown) {
+                        // Some firmware answers the first battery command late.
+                        delay(500)
+                        repository.refreshBattery()
+                    }
                 }
             }
         }
         viewModelScope.launch {
             repository.snapshot.collect { snapshot ->
                 if (snapshot == null) return@collect
-                _uiState.update {
-                    it.copy(
-                        battery = snapshot.battery,
+                Log.i(
+                    TAG,
+                    "Snapshot: chip=${snapshot.deviceInfo.chipName} " +
+                        "side=${snapshot.agentIsRight} battery=${snapshot.battery}",
+                )
+                _uiState.update { current ->
+                    current.copy(
+                        battery = BudsBattery(
+                            leftPercent = snapshot.battery.leftPercent
+                                ?: current.battery.leftPercent,
+                            rightPercent = snapshot.battery.rightPercent
+                                ?: current.battery.rightPercent,
+                            casePercent = snapshot.battery.casePercent
+                                ?: current.battery.casePercent,
+                            agentPercent = snapshot.battery.agentPercent
+                                ?: current.battery.agentPercent,
+                            partnerPercent = snapshot.battery.partnerPercent
+                                ?: current.battery.partnerPercent,
+                        ),
                         chipName = snapshot.deviceInfo.chipName,
                     )
                 }
@@ -176,6 +199,15 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
 
     fun hideError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /** Re-reads battery and ANC on the current connection. */
+    fun refresh() {
+        if (!_uiState.value.connected) return
+        viewModelScope.launch {
+            repository.refreshBattery()
+            readAnc()
+        }
     }
 
     private suspend fun readAnc() {
