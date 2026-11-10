@@ -4,13 +4,18 @@ import android.app.Application
 import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.airbuds.companion.data.ble.BudsSession
 import com.airbuds.companion.data.ble.GattState
 import com.airbuds.companion.data.ble.GattTransport
 import com.airbuds.companion.data.ble.RaceCodec
 import com.airbuds.companion.data.ble.RaceCommandQueue
 import com.airbuds.companion.data.ble.RaceDeviceInfo
-import com.airbuds.companion.data.ble.RaceInitializer
+import com.airbuds.companion.data.ble.RaceFrame
 import com.airbuds.companion.data.ble.ScannedDevice
+import com.airbuds.companion.data.ble.YfyBatteryLevel
+import com.airbuds.companion.data.ble.YfyBatteryParser
+import com.airbuds.companion.data.ble.YfyBatteryStatus
+import com.airbuds.companion.domain.model.BudsBattery
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +31,8 @@ data class DiagnosticsUiState(
     val filterByService: Boolean = true,
     val devices: List<ScannedDevice> = emptyList(),
     val deviceInfo: RaceDeviceInfo? = null,
+    val battery: BudsBattery = BudsBattery.Unknown,
+    val yfyBattery: YfyBatteryStatus? = null,
     val logs: List<String> = emptyList(),
     val error: String? = null,
 )
@@ -46,7 +53,8 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
         onFrame = { frame -> appendLog("RX ${hex(RaceCodec.encode(frame))}") },
         onTx = { bytes -> appendLog("TX ${hex(bytes)}") },
     )
-    private val queue = RaceCommandQueue(transport)
+    private val queue = RaceCommandQueue(transport, onIndication = ::handleIndication)
+    private val session = BudsSession(queue)
 
     private var scanJob: Job? = null
     private var connectJob: Job? = null
@@ -103,18 +111,27 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
         connectJob?.cancel()
 
         connectJob = viewModelScope.launch {
-            _uiState.update { it.copy(error = null, deviceInfo = null) }
+            _uiState.update {
+                it.copy(error = null, deviceInfo = null, battery = BudsBattery.Unknown, yfyBattery = null)
+            }
             appendLog("CONNECT ${device.address}")
 
             try {
                 transport.connect(device)
                 appendLog("INIT start")
-                val info = RaceInitializer(queue).initialize()
+                val info = session.initialize()
                 _uiState.update { it.copy(deviceInfo = info) }
                 appendLog(
                     "INIT chip=${info.chipName} type=${info.deviceType} " +
                         "nvdm=${info.nvdmVersion} role=${info.role} " +
                         "peer=${info.peerId ?: "none"}",
+                )
+
+                val battery = session.readBattery(info)
+                _uiState.update { it.copy(battery = battery) }
+                appendLog(
+                    "BATTERY agent=${battery.agentPercent ?: "unknown"} " +
+                        "partner=${battery.partnerPercent ?: "unknown"}",
                 )
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -129,7 +146,9 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
         connectJob?.cancel()
         connectJob = null
         transport.close()
-        _uiState.update { it.copy(deviceInfo = null) }
+        _uiState.update {
+            it.copy(deviceInfo = null, battery = BudsBattery.Unknown, yfyBattery = null)
+        }
         appendLog("DISCONNECT")
     }
 
@@ -164,6 +183,22 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
         val detail = error.message ?: error.javaClass.simpleName
         _uiState.update { it.copy(error = "$context: $detail") }
         appendLog("ERROR $context: $detail")
+    }
+
+    private fun handleIndication(frame: RaceFrame) {
+        val status = YfyBatteryParser.parse(frame) ?: return
+        _uiState.update { it.copy(yfyBattery = status) }
+        appendLog(
+            "YFY battery event=${status.event} " +
+                "right=${status.right.describe()} " +
+                "left=${status.left.describe()} " +
+                "case=${status.case.describe()}",
+        )
+    }
+
+    private fun YfyBatteryLevel.describe(): String {
+        val value = percent?.let { "$it %" } ?: "unknown"
+        return if (charging) "$value charging" else value
     }
 
     private fun appendLog(line: String) {

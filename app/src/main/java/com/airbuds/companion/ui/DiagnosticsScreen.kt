@@ -58,6 +58,9 @@ import com.airbuds.companion.data.ble.GattState
 import com.airbuds.companion.data.ble.RaceDeviceInfo
 import com.airbuds.companion.data.ble.ScannedDevice
 import com.airbuds.companion.data.ble.TwsRole
+import com.airbuds.companion.data.ble.YfyBatteryLevel
+import com.airbuds.companion.data.ble.YfyBatteryStatus
+import com.airbuds.companion.domain.model.BudsBattery
 import com.airbuds.companion.overlay.BudsOverlayService
 import com.airbuds.companion.overlay.OverlayPermission
 
@@ -221,6 +224,22 @@ fun DiagnosticsScreen(
             item {
                 DiagnosticCard {
                     DeviceInfoSection(info)
+                }
+            }
+        }
+
+        if (state.battery.isKnown) {
+            item {
+                DiagnosticCard {
+                    BatterySection(state.battery)
+                }
+            }
+        }
+
+        state.yfyBattery?.let { status ->
+            item {
+                DiagnosticCard {
+                    YfyBatterySection(status)
                 }
             }
         }
@@ -430,8 +449,42 @@ private fun DeviceInfoSection(info: RaceDeviceInfo) {
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
+private fun BatterySection(battery: BudsBattery) {
+    Text(
+        text = stringResource(R.string.diagnostics_battery),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    Spacer(Modifier.height(10.dp))
+    battery.agentPercent?.let {
+        InfoRow(stringResource(R.string.diagnostics_battery_agent), "$it %")
+    }
+    battery.partnerPercent?.let {
+        InfoRow(stringResource(R.string.diagnostics_battery_partner), "$it %")
+    }
+    battery.casePercent?.let {
+        InfoRow(stringResource(R.string.diagnostics_battery_case), "$it %")
+    }
+}
+
+@Composable
+private fun YfyBatterySection(status: YfyBatteryStatus) {
+    Text(
+        text = stringResource(R.string.diagnostics_yfy_battery),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    Spacer(Modifier.height(10.dp))
+    InfoRow(stringResource(R.string.diagnostics_battery_right), status.right.display())
+    InfoRow(stringResource(R.string.diagnostics_battery_left), status.left.display())
+    InfoRow(stringResource(R.string.diagnostics_battery_case), status.case.display())
+}
+
+private fun YfyBatteryLevel.display(): String {
+    val value = percent?.let { "$it %" } ?: "?"
+    return if (charging) "$value ⚡" else value
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {    Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

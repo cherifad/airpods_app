@@ -53,6 +53,13 @@
     <string name="diagnostics_nvdm">Version NVDM</string>
     <string name="diagnostics_role">Rôle TWS</string>
     <string name="diagnostics_peer">ID du pair</string>
+    <string name="diagnostics_battery">Batterie</string>
+    <string name="diagnostics_battery_agent">Agent</string>
+    <string name="diagnostics_battery_partner">Pair</string>
+    <string name="diagnostics_battery_case">Boîtier</string>
+    <string name="diagnostics_battery_right">Droite</string>
+    <string name="diagnostics_battery_left">Gauche</string>
+    <string name="diagnostics_yfy_battery">État batterie constructeur</string>
     <string name="diagnostics_none">Aucun</string>
     <string name="diagnostics_logs">Journal RACE</string>
     <string name="diagnostics_no_logs">Aucun trafic RACE pour l\'instant.</string>
