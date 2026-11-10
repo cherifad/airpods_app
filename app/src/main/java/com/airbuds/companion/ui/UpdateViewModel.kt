@@ -1,6 +1,7 @@
 package com.airbuds.companion.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.airbuds.companion.data.update.AppRelease
@@ -57,7 +58,9 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
-                _state.value = UpdateState.Failed(error.message ?: "Update check failed")
+                // A launch check must not nag when the phone is offline.
+                Log.w(TAG, "Update check failed", error)
+                _state.value = UpdateState.Idle
             }
         }
     }
@@ -88,10 +91,20 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
     private suspend fun download(release: AppRelease) {
         val version = release.version.toString()
         _state.value = UpdateState.Downloading(version, 0)
-        val file = repository.download(release) { percent ->
-            _state.value = UpdateState.Downloading(version, percent)
+        try {
+            val file = repository.download(release) { percent ->
+                _state.value = UpdateState.Downloading(version, percent)
+            }
+            downloaded = file
+            _state.value = UpdateState.Ready(version)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            _state.value = UpdateState.Failed(error.message ?: "Download failed")
         }
-        downloaded = file
-        _state.value = UpdateState.Ready(version)
+    }
+
+    companion object {
+        private const val TAG = "UpdateViewModel"
     }
 }
