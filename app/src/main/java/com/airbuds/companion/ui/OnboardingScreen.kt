@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -71,23 +72,24 @@ fun OnboardingScreen(onFinished: () -> Unit) {
         granted = BlePermissions.hasScanPermissions(context)
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
+        val compact = maxHeight < 480.dp
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 28.dp)
-                .padding(top = 18.dp, bottom = 120.dp),
+                .padding(top = if (compact) 10.dp else 18.dp, bottom = 110.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             StepDots(step)
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(if (compact) 12.dp else 28.dp))
             Column(
                 modifier = Modifier
                     .widthIn(max = 520.dp)
@@ -95,7 +97,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 when (step) {
-                    OnboardingStep.Welcome -> WelcomeStep()
+                    OnboardingStep.Welcome -> WelcomeStep(compact = compact)
                     OnboardingStep.Permissions -> PermissionsStep(
                         granted = granted,
                         denied = denied,
@@ -171,11 +173,11 @@ fun OnboardingScreen(onFinished: () -> Unit) {
 }
 
 @Composable
-private fun WelcomeStep() {
+private fun WelcomeStep(compact: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(190.dp),
+            .height(if (compact) 104.dp else 190.dp),
         contentAlignment = Alignment.Center,
     ) {
         BudsIllustration(
@@ -184,13 +186,17 @@ private fun WelcomeStep() {
                 .aspectRatio(1.25f),
         )
     }
-    Spacer(Modifier.height(26.dp))
+    Spacer(Modifier.height(if (compact) 14.dp else 26.dp))
     Text(
         text = stringResource(R.string.onboarding_welcome_title),
-        style = MaterialTheme.typography.headlineMedium,
+        style = if (compact) {
+            MaterialTheme.typography.headlineSmall
+        } else {
+            MaterialTheme.typography.headlineMedium
+        },
         textAlign = TextAlign.Center,
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(if (compact) 8.dp else 12.dp))
     Text(
         text = stringResource(R.string.onboarding_welcome_body),
         style = MaterialTheme.typography.bodyMedium,
