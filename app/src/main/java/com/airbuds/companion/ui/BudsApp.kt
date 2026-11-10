@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.airbuds.companion.model.BudsState
 import com.airbuds.companion.model.BudsStateSaver
 import kotlinx.coroutines.delay
@@ -29,6 +31,9 @@ fun BudsApp() {
     var popupVisible by rememberSaveable { mutableStateOf(false) }
     var autoShown by rememberSaveable { mutableStateOf(false) }
     var showDiagnostics by rememberSaveable { mutableStateOf(false) }
+
+    val updateViewModel: UpdateViewModel = viewModel()
+    val updateState by updateViewModel.state.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val debuggable = remember(context) {
@@ -47,6 +52,10 @@ fun BudsApp() {
             popupVisible = true
             autoShown = true
         }
+    }
+
+    LaunchedEffect(Unit) {
+        updateViewModel.check()
     }
 
     BackHandler(enabled = popupVisible) {
@@ -80,6 +89,13 @@ fun BudsApp() {
             state = state,
             onAncChange = { state = state.copy(anc = it) },
             onDismiss = { popupVisible = false },
+        )
+        UpdateDialog(
+            state = updateState,
+            onInstall = updateViewModel::install,
+            onOpenSettings = updateViewModel::openInstallPermissionSettings,
+            onRetry = updateViewModel::retry,
+            onDismiss = updateViewModel::dismiss,
         )
     }
 }

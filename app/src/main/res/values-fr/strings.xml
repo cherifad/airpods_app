@@ -80,4 +80,13 @@
     <string name="overlay_channel_name">Popup flottant</string>
     <string name="overlay_notification_title">Buds Companion</string>
     <string name="overlay_notification_text">Le popup flottant est actif</string>
+    <string name="update_title">Mise à jour</string>
+    <string name="update_downloading">Téléchargement de la version %1$s… %2$d%%</string>
+    <string name="update_ready">La version %1$s est prête à être installée.</string>
+    <string name="update_install">Installer</string>
+    <string name="update_later">Plus tard</string>
+    <string name="update_failed">Échec de la mise à jour : %1$s</string>
+    <string name="update_retry">Réessayer</string>
+    <string name="update_permission">Autorisez l\'installation depuis cette application pour appliquer la mise à jour.</string>
+    <string name="update_open_settings">Ouvrir les paramètres</string>
 </resources>
