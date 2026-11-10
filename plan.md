@@ -658,7 +658,7 @@ the UI and is not exposed.
 | OTA backend is cleartext HTTP | tampered or spoofed firmware | verify checksum and package origin, prefer an HTTPS mirror, document the risk | ? |
 | Unsigned firmware on the app side | brick or implant | checksum/version checks, explicit confirmation, no auto-install | ? |
 | Automatic app update download | wrong APK, rate limit or mobile data | select the release APK by name, verify SHA-256 when GitHub provides a digest, keep the install prompt explicit | ? |
-| CI release signed with the debug key | cannot publish on Play | add a release keystore in CI secrets before the first Play upload | ? |
+| CI release without RELEASE_* secrets | ephemeral debug signature, in-app updates rejected across runs | configure the keystore secrets before publishing a release | ? |
 | Play Console account/signing unavailable | release blocked | create account early, internal test | ? |
 
 ---

@@ -86,9 +86,17 @@ A `vX.Y.Z` tag additionally publishes a GitHub Release with the tag as its name
 and attaches `app-release.apk`. The workflow derives `versionName` from the tag
 and `versionCode` as `major * 10000 + minor * 100 + patch`.
 
-The CI release is signed with the Android **debug** key until a release keystore
-is configured. That is enough for internal sideloading and for the in-app
-updater, but it is not a Play Store signing setup.
+A stable signature is required for in-app updates: Android refuses an update
+signed with a different key. Configure these repository secrets:
+
+- `RELEASE_KEYSTORE_BASE64` (`base64 -w0 release.jks`)
+- `RELEASE_KEYSTORE_PASSWORD`
+- `RELEASE_KEY_ALIAS`
+- `RELEASE_KEY_PASSWORD`
+
+Without them the release falls back to the runner's ephemeral debug key: fine
+for a one-off install, but updates across CI runs are rejected. No keystore is
+committed.
 
 At launch the app reads `releases/latest`, compares the tag numerically with
 `BuildConfig.VERSION_NAME`, downloads the APK automatically and opens the system
