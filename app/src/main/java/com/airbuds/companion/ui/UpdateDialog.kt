@@ -18,12 +18,37 @@ import com.airbuds.companion.R
 @Composable
 fun UpdateDialog(
     state: UpdateState,
+    onDownload: () -> Unit,
     onInstall: () -> Unit,
     onRetry: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     when (state) {
         UpdateState.Idle, UpdateState.Checking -> Unit
+
+        is UpdateState.Available -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.update_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.update_available,
+                        state.version,
+                        (state.sizeBytes / (1024 * 1024)).toInt(),
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = onDownload) {
+                    Text(stringResource(R.string.update_download))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.update_later))
+                }
+            },
+        )
 
         is UpdateState.Downloading -> AlertDialog(
             onDismissRequest = onDismiss,

@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 sealed interface UpdateState {
     data object Idle : UpdateState
     data object Checking : UpdateState
+    data class Available(val version: String, val sizeBytes: Long) : UpdateState
     data class Downloading(val version: String, val percent: Int) : UpdateState
     data class Ready(val version: String) : UpdateState
     data object InstallPermissionRequired : UpdateState
@@ -25,11 +26,10 @@ sealed interface UpdateState {
 }
 
 /**
- * Checks GitHub Releases once per process, downloads the APK in the app and
- * hands it to the system installer.
+ * Checks GitHub Releases once per process and asks before downloading.
  *
- * Nothing opens a browser. The download starts automatically when a newer
- * version exists; the user can cancel it with "Later".
+ * Nothing opens a browser. The update is downloaded only after the user taps
+ * Download; the install prompt is a separate step.
  */
 class UpdateViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -40,6 +40,7 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
 
     private var job: Job? = null
     private var checked = false
+    private var pending: AppRelease? = null
     private var downloaded: File? = null
 
     fun check() {
@@ -54,13 +55,32 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
                     _state.value = UpdateState.Idle
                     return@launch
                 }
-                download(release)
+                pending = release
+                _state.value = UpdateState.Available(
+                    version = release.version.toString(),
+                    sizeBytes = release.asset.size,
+                )
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
                 // A launch check must not nag when the phone is offline.
                 Log.w(TAG, "Update check failed", error)
                 _state.value = UpdateState.Idle
+            }
+        }
+    }
+
+    /** Downloads the pending release after the user confirmed it. */
+    fun download() {
+        val release = pending ?: return
+        if (job?.isActive == true) return
+        job = viewModelScope.launch {
+            try {
+                download(release)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _state.value = UpdateState.Failed(error.message ?: "Download failed")
             }
         }
     }

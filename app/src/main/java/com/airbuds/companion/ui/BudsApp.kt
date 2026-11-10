@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.airbuds.companion.BuildConfig
+import com.airbuds.companion.data.preferences.OnboardingPreferences
 import kotlinx.coroutines.delay
 
 @Composable
@@ -41,8 +42,21 @@ fun BudsApp() {
         (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }
 
+    val onboardingPreferences = remember(context) { OnboardingPreferences(context) }
+    var onboardingDone by rememberSaveable { mutableStateOf(onboardingPreferences.completed) }
+
     if (debuggable && showDiagnostics) {
         DiagnosticsScreen(onBack = { showDiagnostics = false })
+        return
+    }
+
+    if (!onboardingDone) {
+        OnboardingScreen(
+            onFinished = {
+                onboardingPreferences.completed = true
+                onboardingDone = true
+            },
+        )
         return
     }
 
@@ -112,6 +126,7 @@ fun BudsApp() {
         )
         UpdateDialog(
             state = updateState,
+            onDownload = updateViewModel::download,
             onInstall = updateViewModel::install,
             onRetry = updateViewModel::retry,
             onDismiss = updateViewModel::dismiss,
