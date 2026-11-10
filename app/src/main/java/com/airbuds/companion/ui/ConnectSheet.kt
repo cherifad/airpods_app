@@ -136,7 +136,10 @@ fun ConnectSheet(
                 }
 
                 Spacer(Modifier.height(12.dp))
-                if (state.devices.isEmpty() && !state.scanning) {
+                val nearby = state.devices.filter { device ->
+                    state.pairedDevices.none { it.device.address == device.device.address }
+                }
+                if (state.pairedDevices.isEmpty() && nearby.isEmpty() && !state.scanning) {
                     Text(
                         text = stringResource(R.string.connect_no_devices),
                         style = MaterialTheme.typography.bodySmall,
@@ -146,10 +149,30 @@ fun ConnectSheet(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(320.dp),
+                            .height(360.dp),
                     ) {
-                        items(items = state.devices, key = { it.device.address }) { device ->
-                            DeviceRow(device = device, onConnect = { onConnect(device) })
+                        if (state.pairedDevices.isNotEmpty()) {
+                            item { SectionLabel(stringResource(R.string.connect_paired)) }
+                            items(
+                                items = state.pairedDevices,
+                                key = { "paired-${it.device.address}" },
+                            ) { device ->
+                                DeviceRow(
+                                    device = device,
+                                    paired = true,
+                                    onConnect = { onConnect(device) },
+                                )
+                            }
+                        }
+                        if (nearby.isNotEmpty()) {
+                            item { SectionLabel(stringResource(R.string.connect_nearby)) }
+                            items(items = nearby, key = { "nearby-${it.device.address}" }) { device ->
+                                DeviceRow(
+                                    device = device,
+                                    paired = false,
+                                    onConnect = { onConnect(device) },
+                                )
+                            }
                         }
                     }
                 }
@@ -159,7 +182,17 @@ fun ConnectSheet(
 }
 
 @Composable
-private fun DeviceRow(device: ScannedDevice, onConnect: () -> Unit) {
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun DeviceRow(device: ScannedDevice, paired: Boolean, onConnect: () -> Unit) {
     OutlinedButton(
         onClick = onConnect,
         modifier = Modifier
@@ -179,7 +212,11 @@ private fun DeviceRow(device: ScannedDevice, onConnect: () -> Unit) {
             )
         }
         Text(
-            text = "${device.rssi} dBm",
+            text = if (paired) {
+                stringResource(R.string.connect_paired_label)
+            } else {
+                "${device.rssi} dBm"
+            },
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary,
         )

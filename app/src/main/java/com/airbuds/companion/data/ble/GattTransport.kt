@@ -76,6 +76,30 @@ class GattTransport(
     @Volatile private var pendingWrite: CancellableContinuation<Unit>? = null
     @Volatile private var maxWriteSize: Int = MIN_WRITE_SIZE
 
+    /**
+     * Bonded audio devices that can be picked without scanning.
+     *
+     * Earbuds that are already connected to the phone often stop advertising,
+     * so the scan cannot see them; the paired list makes them selectable.
+     */
+    @SuppressLint("MissingPermission")
+    fun bondedDevices(): List<ScannedDevice> {
+        val adapter = adapter()
+        if (!adapter.isEnabled) return emptyList()
+        return adapter.bondedDevices.orEmpty()
+            .filter {
+                it.bluetoothClass?.majorDeviceClass ==
+                    android.bluetooth.BluetoothClass.Device.Major.AUDIO_VIDEO
+            }
+            .map { device ->
+                ScannedDevice(
+                    device = device,
+                    name = device.name,
+                    rssi = PAIRED_RSSI,
+                )
+            }
+    }
+
     /** Emits devices advertising the Airoha service until [timeoutMillis] elapses. */
     fun scan(
         timeoutMillis: Long = DEFAULT_SCAN_TIMEOUT_MS,
@@ -475,6 +499,9 @@ class GattTransport(
         const val DEFAULT_CONNECT_TIMEOUT_MS = 15_000L
         const val WRITE_TIMEOUT_MS = 5_000L
         const val MIN_WRITE_SIZE = 20
+
+        /** Sentinel RSSI for bonded devices that were not seen in a scan. */
+        const val PAIRED_RSSI = Int.MIN_VALUE
 
         private const val TAG = "GattTransport"
     }

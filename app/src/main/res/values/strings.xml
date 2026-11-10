@@ -72,6 +72,9 @@
     <string name="connect_scan">Scan</string>
     <string name="connect_scanning">Scanning…</string>
     <string name="connect_no_devices">No earbuds found. Take them out of the case and try again.</string>
+    <string name="connect_paired">Paired devices</string>
+    <string name="connect_nearby">Nearby devices</string>
+    <string name="connect_paired_label">Paired</string>
     <string name="connect_connecting">Connecting…</string>
     <string name="connect_cta">Connect earbuds</string>
     <string name="connect_disconnect">Disconnect</string>
@@ -86,6 +89,20 @@
     <string name="error_protocol">The earbuds returned an unexpected response.</string>
     <string name="error_transport">Bluetooth connection failed.</string>
     <string name="error_unknown">Something went wrong.</string>
+    <string name="onboarding_welcome_title">Your earbuds, one tap away</string>
+    <string name="onboarding_welcome_body">Battery, listening mode and connection status for your Airoha earbuds — without opening the vendor app.</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_permissions_title">Nearby devices</string>
+    <string name="onboarding_permissions_body">Sonabud needs the Nearby devices permission to find and connect your earbuds. It does not use your location.</string>
+    <string name="onboarding_permissions_body_legacy">Android requires the Location permission to scan for Bluetooth devices. Sonabud does not track your location.</string>
+    <string name="onboarding_permissions_pending">The permission is requested next.</string>
+    <string name="onboarding_permissions_granted">Bluetooth access is allowed.</string>
+    <string name="onboarding_permissions_denied">Permission denied. You can allow it later from the connect sheet.</string>
+    <string name="onboarding_allow">Allow</string>
+    <string name="onboarding_not_now">Not now</string>
+    <string name="onboarding_ready_title">You’re all set</string>
+    <string name="onboarding_ready_body">Take your earbuds out of the case and tap Start to connect them.</string>
+    <string name="onboarding_start">Start</string>
 
     <string name="overlay_title">System overlay (debug)</string>
     <string name="overlay_description">Floating card over other apps. This spike uses mock data.</string>
@@ -99,6 +116,8 @@
     <string name="overlay_notification_title">Sonabud</string>
     <string name="overlay_notification_text">Floating popup is active</string>
     <string name="update_title">App update</string>
+    <string name="update_available">Version %1$s is available (%2$d MB). Download it in the app?</string>
+    <string name="update_download">Download</string>
     <string name="update_downloading">Downloading version %1$s… %2$d%%</string>
     <string name="update_ready">Version %1$s is ready to install.</string>
     <string name="update_install">Install</string>

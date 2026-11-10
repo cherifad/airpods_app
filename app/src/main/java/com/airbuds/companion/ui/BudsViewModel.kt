@@ -70,7 +70,14 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun showConnectSheet() {
-        _uiState.update { it.copy(connectSheetVisible = true, error = null) }
+        _uiState.update {
+            it.copy(
+                connectSheetVisible = true,
+                error = null,
+                pairedDevices = runCatching { transport.bondedDevices() }
+                    .getOrDefault(emptyList()),
+            )
+        }
     }
 
     fun hideConnectSheet() {
@@ -79,8 +86,14 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
 
     fun scan() {
         scanJob?.cancel()
+        val paired = runCatching { transport.bondedDevices() }.getOrDefault(emptyList())
         _uiState.update {
-            it.copy(scanning = true, devices = emptyList(), error = null)
+            it.copy(
+                scanning = true,
+                devices = emptyList(),
+                pairedDevices = paired,
+                error = null,
+            )
         }
         scanJob = viewModelScope.launch {
             try {

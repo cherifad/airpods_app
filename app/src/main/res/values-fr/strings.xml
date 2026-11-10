@@ -72,6 +72,9 @@
     <string name="connect_scan">Scanner</string>
     <string name="connect_scanning">Scan en cours…</string>
     <string name="connect_no_devices">Aucun écouteur trouvé. Sortez-les du boîtier et réessayez.</string>
+    <string name="connect_paired">Appareils associés</string>
+    <string name="connect_nearby">Appareils à proximité</string>
+    <string name="connect_paired_label">Associé</string>
     <string name="connect_connecting">Connexion…</string>
     <string name="connect_cta">Connecter les écouteurs</string>
     <string name="connect_disconnect">Déconnecter</string>
@@ -86,6 +89,20 @@
     <string name="error_protocol">Les écouteurs ont renvoyé une réponse inattendue.</string>
     <string name="error_transport">La connexion Bluetooth a échoué.</string>
     <string name="error_unknown">Une erreur est survenue.</string>
+    <string name="onboarding_welcome_title">Vos écouteurs, à portée de main</string>
+    <string name="onboarding_welcome_body">Batterie, mode d\'écoute et état de connexion de vos écouteurs Airoha — sans ouvrir l\'application du fabricant.</string>
+    <string name="onboarding_continue">Continuer</string>
+    <string name="onboarding_permissions_title">Appareils à proximité</string>
+    <string name="onboarding_permissions_body">Sonabud a besoin de l\'autorisation « Appareils à proximité » pour trouver et connecter vos écouteurs. Votre position n\'est pas utilisée.</string>
+    <string name="onboarding_permissions_body_legacy">Android exige l\'autorisation de localisation pour scanner les appareils Bluetooth. Sonabud ne suit pas votre position.</string>
+    <string name="onboarding_permissions_pending">L\'autorisation sera demandée à l\'étape suivante.</string>
+    <string name="onboarding_permissions_granted">L\'accès Bluetooth est autorisé.</string>
+    <string name="onboarding_permissions_denied">Autorisation refusée. Vous pourrez l\'accorder plus tard depuis la fenêtre de connexion.</string>
+    <string name="onboarding_allow">Autoriser</string>
+    <string name="onboarding_not_now">Plus tard</string>
+    <string name="onboarding_ready_title">Tout est prêt</string>
+    <string name="onboarding_ready_body">Sortez vos écouteurs du boîtier et appuyez sur Démarrer pour les connecter.</string>
+    <string name="onboarding_start">Démarrer</string>
 
     <string name="overlay_title">Overlay système (debug)</string>
     <string name="overlay_description">Carte flottante par-dessus les autres apps. Ce spike utilise des données simulées.</string>
@@ -99,6 +116,8 @@
     <string name="overlay_notification_title">Sonabud</string>
     <string name="overlay_notification_text">Le popup flottant est actif</string>
     <string name="update_title">Mise à jour</string>
+    <string name="update_available">La version %1$s est disponible (%2$d Mo). La télécharger dans l\'application ?</string>
+    <string name="update_download">Télécharger</string>
     <string name="update_downloading">Téléchargement de la version %1$s… %2$d%%</string>
     <string name="update_ready">La version %1$s est prête à être installée.</string>
     <string name="update_install">Installer</string>

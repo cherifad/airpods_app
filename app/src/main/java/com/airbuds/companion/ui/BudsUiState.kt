@@ -11,6 +11,7 @@ data class BudsUiState(
     val connection: BudsConnection = BudsConnection.Disconnected,
     val scanning: Boolean = false,
     val devices: List<ScannedDevice> = emptyList(),
+    val pairedDevices: List<ScannedDevice> = emptyList(),
     val deviceName: String? = null,
     val chipName: String? = null,
     val battery: BudsBattery = BudsBattery.Unknown,
