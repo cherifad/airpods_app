@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.airbuds.companion.BuildConfig
 import kotlinx.coroutines.delay
 
 @Composable
@@ -55,7 +56,9 @@ fun BudsApp() {
     }
 
     LaunchedEffect(Unit) {
-        updateViewModel.check()
+        if (!BuildConfig.DEBUG) {
+            updateViewModel.check()
+        }
     }
 
     BackHandler(enabled = popupVisible) {
