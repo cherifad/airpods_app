@@ -1,6 +1,6 @@
 # Development Plan — Buds Companion
 
-> **Last updated**: November 9, 2026
+> **Last updated**: November 10, 2026
 > **Protocol source of truth**: [`PROTOCOL.md`](PROTOCOL.md)
 > **Current state**: mocked Compose UI, bottom-anchored popup, bilingual UI,
 > documented RACE protocol, tested frame codec/parser, command queue and
@@ -89,6 +89,10 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   layer has no instrumentation test yet.
 - Case battery is not confirmed on hardware.
 - Rename, find my, EQ, touch controls and game mode payloads are not documented.
+- The FOTA flow is only partially documented: `REPORT-communication.md` lists the
+  update endpoints (cleartext HTTP `twsfota.198509.xyz`) and the `0x1C00`–`0x1C1B`
+  command IDs, but not the version check, the package format or the
+  transfer/commit state machine.
 
 ### 1.3 Technical debt
 
@@ -141,6 +145,8 @@ with the essential features.
 - FR/EN internationalization.
 - Accessibility: TalkBack, touch targets, contrast, large fonts.
 - Hidden diagnostics screen: RACE logs, version, last exchange.
+- App update check with automatic download through Play In-app Updates, plus a
+  notification when the update is ready to install.
 
 ### 2.4 V2 / exploratory (P2)
 
@@ -150,7 +156,9 @@ with the essential features.
 - In-ear detection / auto-pause.
 - Home screen widget.
 - Material You dynamic theme.
-- Firmware update (FOTA): **separate study, high risk**.
+- Firmware update (FOTA): **separate study, high risk**. The app only checks and
+  notifies; the package is downloaded and installed only when the user asks for
+  it.
 
 ### 2.5 Out of scope
 
@@ -264,6 +272,10 @@ app/src/main/java/com/airbuds/companion/
 - [?] **English/French**: English primary and French secondary confirmed; when
   to add more locales?
 - [?] **Git/CI**: initialize a remote repository and GitHub Actions?
+- [x] **App updates**: Play In-app Updates with automatic download; no
+  sideloaded APK auto-update like FlyCC.
+- [x] **Firmware updates**: check and notify only, download and install strictly
+  on user request.
 
 ---
 
@@ -391,6 +403,8 @@ Goal: publish a clean internal beta.
 - [ ] Privacy policy.
 - [ ] Store listing: description, screenshots, icon, banner.
 - [ ] Internal test track in Play Console.
+- [ ] Play In-app Updates: check on launch, notification, automatic download and
+  install prompt.
 - [ ] Regression checklist on a real device.
 - [ ] Version tag and release notes.
 
@@ -496,7 +510,10 @@ documented rollback procedure.
 | F-06 | Touch controls (RE) | P2 | L | B-08 |
 | F-07 | Game mode (RE) | P2 | M | B-08 |
 | F-08 | In-ear detection / auto-pause (RE) | P2 | L | B-08 |
-| F-09 | Firmware update (FOTA) | P3 | L | dedicated study |
+| F-09 | Firmware update study (FOTA flow, partition/commit) | P3 | L | dedicated study |
+| F-10 | Firmware update check and version comparison | P3 | L | F-09 |
+| F-11 | New-firmware notification (Android 13+ permission) | P3 | S | F-10, F-03 |
+| F-12 | On-demand firmware download and install | P3 | L | F-10 |
 
 ### 5.6 Tests and quality
 
@@ -550,6 +567,7 @@ documented rollback procedure.
 | R-05 | Internal test | P1 | M | R-01 |
 | R-06 | Versioning and tags | P1 | S | P-01 |
 | R-07 | Rollback procedure | P2 | S | R-05 |
+| R-08 | Play In-app Updates: check, notify, auto-download, install prompt | P1 | M | R-05 |
 
 ---
 
@@ -570,6 +588,8 @@ Flycc, minimal frame tests.
 | Game mode | `0x2100` event 7 | set command | capture + test | P2 | 1 day |
 | In-ear detection | SDK IDs | payload | capture + test | P2 | 2 days |
 | Firmware info | NVKEY / FOTA | version, build | NVKEY read | P2 | 1 day |
+| Firmware update flow | FOTA `0x1C00`–`0x1C1B` | version check, partition info, transfer/commit state machine, twin-device order | Frida on the Flycc updater + capture | P3 | 3 days |
+| Firmware package format | FOTA + backend | container, compression, CRC coverage, signature | capture + bin diff | P3 | 2 days |
 
 Rule: if a feature is not validated within its timebox, it stays “unknown” in
 the UI and is not exposed.
@@ -620,6 +640,9 @@ the UI and is not exposed.
 | R8 breaks BLE callbacks | release crash | release tests + keep rules | — |
 | MAC address leak in logs | privacy | redaction | — |
 | Unguarded FOTA | bricked device | out of scope | — |
+| OTA backend is cleartext HTTP | tampered or spoofed firmware | verify checksum and package origin, prefer an HTTPS mirror, document the risk | ? |
+| Unsigned firmware on the app side | brick or implant | checksum/version checks, explicit confirmation, no auto-install | ? |
+| Automatic app update download uses mobile data | user complaints | Play In-app Updates follows the user's Play settings; keep the install prompt explicit | ? |
 | Play Console account/signing unavailable | release blocked | create account early, internal test | ? |
 
 ---
