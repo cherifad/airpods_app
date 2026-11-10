@@ -53,6 +53,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.airbuds.companion.R
+import com.airbuds.companion.data.ble.AncState
 import com.airbuds.companion.data.ble.BlePermissions
 import com.airbuds.companion.data.ble.GattState
 import com.airbuds.companion.data.ble.RaceDeviceInfo
@@ -240,6 +241,14 @@ fun DiagnosticsScreen(
             item {
                 DiagnosticCard {
                     YfyBatterySection(status)
+                }
+            }
+        }
+
+        state.ancState?.let { anc ->
+            item {
+                DiagnosticCard {
+                    AncSection(anc)
                 }
             }
         }
@@ -476,6 +485,22 @@ private fun YfyBatterySection(status: YfyBatteryStatus) {
     InfoRow(stringResource(R.string.diagnostics_battery_right), status.right.display())
     InfoRow(stringResource(R.string.diagnostics_battery_left), status.left.display())
     InfoRow(stringResource(R.string.diagnostics_battery_case), status.case.display())
+}
+
+@Composable
+private fun AncSection(state: AncState) {
+    Text(
+        text = stringResource(R.string.diagnostics_anc_state),
+        style = MaterialTheme.typography.titleMedium,
+    )
+    Spacer(Modifier.height(10.dp))
+    InfoRow(
+        stringResource(R.string.diagnostics_anc_mode),
+        state.mode?.let { stringResource(it.labelRes()) }
+            ?: stringResource(R.string.diagnostics_unknown),
+    )
+    InfoRow(stringResource(R.string.diagnostics_anc_filter), state.filter.toString())
+    InfoRow(stringResource(R.string.diagnostics_anc_gain), state.gainHundredths.toString())
 }
 
 private fun YfyBatteryLevel.display(): String {

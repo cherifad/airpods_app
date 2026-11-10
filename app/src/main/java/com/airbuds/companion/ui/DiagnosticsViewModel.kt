@@ -4,6 +4,7 @@ import android.app.Application
 import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.airbuds.companion.data.ble.AncState
 import com.airbuds.companion.data.ble.BudsSession
 import com.airbuds.companion.data.ble.GattState
 import com.airbuds.companion.data.ble.GattTransport
@@ -33,6 +34,7 @@ data class DiagnosticsUiState(
     val deviceInfo: RaceDeviceInfo? = null,
     val battery: BudsBattery = BudsBattery.Unknown,
     val yfyBattery: YfyBatteryStatus? = null,
+    val ancState: AncState? = null,
     val logs: List<String> = emptyList(),
     val error: String? = null,
 )
@@ -112,7 +114,13 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
 
         connectJob = viewModelScope.launch {
             _uiState.update {
-                it.copy(error = null, deviceInfo = null, battery = BudsBattery.Unknown, yfyBattery = null)
+                it.copy(
+                    error = null,
+                    deviceInfo = null,
+                    battery = BudsBattery.Unknown,
+                    yfyBattery = null,
+                    ancState = null,
+                )
             }
             appendLog("CONNECT ${device.address}")
 
@@ -133,6 +141,14 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
                     "BATTERY agent=${battery.agentPercent ?: "unknown"} " +
                         "partner=${battery.partnerPercent ?: "unknown"}",
                 )
+
+                val anc = session.readAncState()
+                _uiState.update { it.copy(ancState = anc) }
+                appendLog(
+                    "ANC mode=${anc?.mode ?: "unknown"} " +
+                        "filter=${anc?.filter ?: "unknown"} " +
+                        "gain=${anc?.gainHundredths ?: "unknown"}",
+                )
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
@@ -147,7 +163,12 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
         connectJob = null
         transport.close()
         _uiState.update {
-            it.copy(deviceInfo = null, battery = BudsBattery.Unknown, yfyBattery = null)
+            it.copy(
+                deviceInfo = null,
+                battery = BudsBattery.Unknown,
+                yfyBattery = null,
+                ancState = null,
+            )
         }
         appendLog("DISCONNECT")
     }

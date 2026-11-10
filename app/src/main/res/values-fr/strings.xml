@@ -60,6 +60,11 @@
     <string name="diagnostics_battery_right">Droite</string>
     <string name="diagnostics_battery_left">Gauche</string>
     <string name="diagnostics_yfy_battery">État batterie constructeur</string>
+    <string name="diagnostics_anc_state">État ANC</string>
+    <string name="diagnostics_anc_mode">Mode</string>
+    <string name="diagnostics_anc_filter">Filtre</string>
+    <string name="diagnostics_anc_gain">Gain (centièmes)</string>
+    <string name="diagnostics_unknown">Inconnu</string>
     <string name="diagnostics_none">Aucun</string>
     <string name="diagnostics_logs">Journal RACE</string>
     <string name="diagnostics_no_logs">Aucun trafic RACE pour l\'instant.</string>

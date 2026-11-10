@@ -60,6 +60,11 @@
     <string name="diagnostics_battery_right">Right</string>
     <string name="diagnostics_battery_left">Left</string>
     <string name="diagnostics_yfy_battery">Vendor battery status</string>
+    <string name="diagnostics_anc_state">ANC state</string>
+    <string name="diagnostics_anc_mode">Mode</string>
+    <string name="diagnostics_anc_filter">Filter</string>
+    <string name="diagnostics_anc_gain">Gain (hundredths)</string>
+    <string name="diagnostics_unknown">Unknown</string>
     <string name="diagnostics_none">None</string>
     <string name="diagnostics_logs">RACE log</string>
     <string name="diagnostics_no_logs">No RACE traffic yet.</string>
