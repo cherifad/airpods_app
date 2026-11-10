@@ -87,6 +87,7 @@ app/src/main/java/com/airbuds/companion/
 │   │   ├── FrameChunker.kt      # split writes to the negotiated MTU
 │   │   ├── GattState.kt         # connection state, errors, scan result
 │   │   ├── GattTransport.kt     # scan/connect/CCCD/MTU/notifications
+│   │   ├── RaceAnc.kt           # 0x0E06 control + 0x0901 state read
 │   │   ├── RaceBattery.kt       # 0x0CD6 agent + 0x0D01 partner battery
 │   │   ├── RaceCommandQueue.kt  # one command at a time, timeout, retry
 │   │   ├── RaceCodec.kt         # single-frame encode/decode
@@ -134,6 +135,7 @@ app/src/test/java/com/airbuds/companion/data/
 ├── ble/
 │   ├── BudsSessionTest.kt       # init + agent/partner battery snapshot
 │   ├── FrameChunkerTest.kt      # MTU-sized write splitting
+│   ├── RaceAncTest.kt           # ANC payloads and state parsing
 │   ├── RaceBatteryTest.kt       # agent level, relay request/response
 │   ├── RaceCodecTest.kt         # encoding, limits, malformed frames
 │   ├── RaceInitializerTest.kt   # init sequence, NVKEY routing, device info

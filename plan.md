@@ -79,6 +79,8 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   with tests, wired into the diagnostics screen as a live indication card.
 - [x] `BudsRepository` + `BudsConnection`/`BudsError`: attach, refresh, detach
   and exception mapping, with tests.
+- [x] ANC controller: `0x0E06` enable/disable/gain, `0x0901` state read, mode
+  mapping and tests; the diagnostics screen shows the live filter and gain.
 - [x] FOTA protocol documented from Flycc 2.0.35: update discovery, package
   layout, DFU information, erase/program/commit sequence and TWS variants.
 
@@ -348,17 +350,17 @@ vendor app, reconnection working, error states visible.
 
 Goal: control ANC and reflect the firmware state.
 
-- [ ] Read state via `0x0901` module 5.
-- [ ] Enable via `0x0E06` (`00 0A <filter> [mode] 01`).
-- [ ] Disable via `0x0E06` (`00 0B 01`).
-- [ ] Set pass-through gain when needed (`00 0F <gain> 01`).
-- [ ] Map the 3 UI modes:
+- [x] Read state via `0x0901` module 5.
+- [x] Enable via `0x0E06` (`00 0A <filter> [mode] 01`).
+- [x] Disable via `0x0E06` (`00 0B 01`).
+- [x] Set pass-through gain when needed (`00 0F <gain> 01`).
+- [~] Map the 3 UI modes:
   - Off → `filter = 0`;
   - Noise Cancelling → `filter = 1..4`;
   - Transparency → `filter = 9..11`, `mode = 4`.
 - [ ] Optimistic update + rollback when the firmware rejects it.
 - [ ] Verify synchronization after a change from another device.
-- [ ] Unit tests for the mapping and payloads.
+- [x] Unit tests for the mapping and payloads.
 
 **Acceptance criteria**: the 3 modes work on a real device, the UI state stays
 in sync, and no crash occurs when a command fails.
