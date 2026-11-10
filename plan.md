@@ -73,6 +73,14 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   `WindowManager` (mock data).
 - [x] Battery reader: agent `0x0CD6`, partner through the `0x0D01` relay, with
   status/level validation and unit tests.
+- [x] `BudsBattery` + `BudsSession`: init and battery snapshot, wired into the
+  debug diagnostics screen (agent/partner percentages).
+- [x] YFY `0x2100/0x0D` parser: right/left/case percentages and charging flags,
+  with tests, wired into the diagnostics screen as a live indication card.
+- [x] `BudsRepository` + `BudsConnection`/`BudsError`: attach, refresh, detach
+  and exception mapping, with tests.
+- [x] FOTA protocol documented from Flycc 2.0.35: update discovery, package
+  layout, DFU information, erase/program/commit sequence and TWS variants.
 
 ### 1.2 Current limits
 
@@ -89,10 +97,10 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   layer has no instrumentation test yet.
 - Case battery is not confirmed on hardware.
 - Rename, find my, EQ, touch controls and game mode payloads are not documented.
-- The FOTA flow is only partially documented: `REPORT-communication.md` lists the
-  update endpoints (cleartext HTTP `twsfota.198509.xyz`) and the `0x1C00`–`0x1C1B`
-  command IDs, but not the version check, the package format or the
-  transfer/commit state machine.
+- The FOTA protocol is documented in `PROTOCOL.md` §5.6 (discovery, package
+  layout, DFU info, erase/program/commit sequence). The package container,
+  compression and signing are still unknown, and the flow is not validated on
+  hardware.
 
 ### 1.3 Technical debt
 
@@ -321,8 +329,8 @@ device info; disconnection does not crash; codec tests pass.
 
 Goal: replace the mocked battery and connection state.
 
-- [ ] Models `BudsConnection`, `BudsBattery`, `BudsDeviceInfo`.
-- [ ] `BudsRepository`: connection → init → ready → disconnect cycle.
+- [~] Models `BudsConnection`, `BudsBattery`, `BudsDeviceInfo`.
+- [~] `BudsRepository`: connection → init → ready → disconnect cycle.
 - [ ] `BudsViewModel` + `BudsUiState`.
 - [~] Local battery `0x0CD6`.
 - [~] Partner battery through relay `0x0D01` when a peer is present.
@@ -330,7 +338,7 @@ Goal: replace the mocked battery and connection state.
 - [ ] Automatic reconnection to the last device.
 - [ ] Error handling: Bluetooth off, permission denied, timeout, missing device.
 - [ ] Bind the home screen to the `ViewModel`; progressively remove the mock.
-- [ ] Case battery via `0x2100/0x0D` when available, otherwise unknown.
+- [~] Case battery via `0x2100/0x0D` when available, otherwise unknown.
 - [ ] Tests: battery parsing, relay, state mapping.
 
 **Acceptance criteria**: real battery values displayed, consistent with the
@@ -510,7 +518,7 @@ documented rollback procedure.
 | F-06 | Touch controls (RE) | P2 | L | B-08 |
 | F-07 | Game mode (RE) | P2 | M | B-08 |
 | F-08 | In-ear detection / auto-pause (RE) | P2 | L | B-08 |
-| F-09 | Firmware update study (FOTA flow, partition/commit) | P3 | L | dedicated study |
+| F-09 | Firmware update study (FOTA flow, partition/commit) | P3 | L | dedicated study; protocol documented in PROTOCOL §5.6 |
 | F-10 | Firmware update check and version comparison | P3 | L | F-09 |
 | F-11 | New-firmware notification (Android 13+ permission) | P3 | S | F-10, F-03 |
 | F-12 | On-demand firmware download and install | P3 | L | F-10 |
@@ -588,7 +596,7 @@ Flycc, minimal frame tests.
 | Game mode | `0x2100` event 7 | set command | capture + test | P2 | 1 day |
 | In-ear detection | SDK IDs | payload | capture + test | P2 | 2 days |
 | Firmware info | NVKEY / FOTA | version, build | NVKEY read | P2 | 1 day |
-| Firmware update flow | FOTA `0x1C00`–`0x1C1B` | version check, partition info, transfer/commit state machine, twin-device order | Frida on the Flycc updater + capture | P3 | 3 days |
+| Firmware update flow | FOTA `0x1C00`–`0x1C1C`, `0x0402`–`0x0433` | documented in PROTOCOL §5.6; remaining: package container, signature, mode differences | capture via `docs/fota-validation.md`, then validate on hardware | P3 | 1 day |
 | Firmware package format | FOTA + backend | container, compression, CRC coverage, signature | capture + bin diff | P3 | 2 days |
 
 Rule: if a feature is not validated within its timebox, it stays “unknown” in
@@ -682,5 +690,8 @@ overlay on a real AB1565. Then start M2: repository/`ViewModel`, battery
 `0x0CD6`, partner relay `0x0D01` and real product UI wiring. The production
 overlay and permission flow come with M4; M0 leftovers (CI and the empty
 settings screen) can follow.
+
+FOTA validation is pending a capture with real earbuds; the procedure is in
+[`docs/fota-validation.md`](docs/fota-validation.md).
 
 

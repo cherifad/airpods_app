@@ -80,21 +80,30 @@ See [`AGENTS.md`](AGENTS.md) for the full conventions.
 app/src/main/java/com/airbuds/companion/
 ├── MainActivity.kt              # edge-to-edge + theme
 ├── data/
-│   └── ble/
-│       ├── AirohaUuids.kt       # service, TX/RX, CCCD and MTU constants
-│       ├── BlePermissions.kt    # runtime permission sets by API level
-│       ├── FrameChunker.kt      # split writes to the negotiated MTU
-│       ├── GattState.kt         # connection state, errors, scan result
-│       ├── GattTransport.kt     # scan/connect/CCCD/MTU/notifications
-│       ├── RaceBattery.kt       # 0x0CD6 agent + 0x0D01 partner battery
-│       ├── RaceCommandQueue.kt  # one command at a time, timeout, retry
-│       ├── RaceCodec.kt         # single-frame encode/decode
-│       ├── RaceDeviceInfo.kt    # chip, form factor, role, peer
-│       ├── RaceFrame.kt         # frame model and size limits
-│       ├── RaceIds.kt           # command and NVKEY identifiers
-│       ├── RaceInitializer.kt   # PROTOCOL.md §4 initialization sequence
-│       ├── RaceParser.kt        # fragment/concatenation reassembly
-│       └── RaceTransport.kt     # raw write boundary (implemented by GATT)
+│   ├── ble/
+│   │   ├── AirohaUuids.kt       # service, TX/RX, CCCD and MTU constants
+│   │   ├── BlePermissions.kt    # runtime permission sets by API level
+│   │   ├── BudsSession.kt       # init + battery snapshot for the product
+│   │   ├── FrameChunker.kt      # split writes to the negotiated MTU
+│   │   ├── GattState.kt         # connection state, errors, scan result
+│   │   ├── GattTransport.kt     # scan/connect/CCCD/MTU/notifications
+│   │   ├── RaceBattery.kt       # 0x0CD6 agent + 0x0D01 partner battery
+│   │   ├── RaceCommandQueue.kt  # one command at a time, timeout, retry
+│   │   ├── RaceCodec.kt         # single-frame encode/decode
+│   │   ├── RaceDeviceInfo.kt    # chip, form factor, role, peer
+│   │   ├── RaceFrame.kt         # frame model and size limits
+│   │   ├── RaceIds.kt           # command and NVKEY identifiers
+│   │   ├── RaceInitializer.kt   # PROTOCOL.md §4 initialization sequence
+│   │   ├── RaceParser.kt        # fragment/concatenation reassembly
+│   │   ├── RaceTransport.kt     # raw write boundary (implemented by GATT)
+│   │   └── YfyBattery.kt        # 0x2100/0x0D case + charging notification
+│   └── repository/
+│       └── BudsRepository.kt    # connection/init/battery state, error mapping
+├── domain/
+│   └── model/
+│       ├── BudsBattery.kt       # agent/partner levels, unknown-safe
+│       ├── BudsConnection.kt    # disconnected → connecting → ready
+│       └── BudsError.kt         # product-level error model
 ├── model/
 │   ├── AncMode.kt               # Noise Cancelling / Transparency / Off
 │   └── BudsState.kt             # mocked state (name, battery, ANC, connection)
@@ -121,13 +130,18 @@ app/src/main/res/
 ├── values-fr/strings.xml        # French
 └── xml/locales_config.xml       # per-app language (Android 13+)
 
-app/src/test/java/com/airbuds/companion/data/ble/
-├── FrameChunkerTest.kt          # MTU-sized write splitting
-├── RaceBatteryTest.kt           # agent level, relay request/response
-├── RaceCodecTest.kt             # encoding, limits, malformed frames
-├── RaceInitializerTest.kt       # init sequence, NVKEY routing, device info
-├── RaceParserTest.kt            # fragments, concatenation, resync
-└── RaceCommandQueueTest.kt      # matching, timeout, retry, serialization
+app/src/test/java/com/airbuds/companion/data/
+├── ble/
+│   ├── BudsSessionTest.kt       # init + agent/partner battery snapshot
+│   ├── FrameChunkerTest.kt      # MTU-sized write splitting
+│   ├── RaceBatteryTest.kt       # agent level, relay request/response
+│   ├── RaceCodecTest.kt         # encoding, limits, malformed frames
+│   ├── RaceInitializerTest.kt   # init sequence, NVKEY routing, device info
+│   ├── RaceParserTest.kt        # fragments, concatenation, resync
+│   ├── RaceCommandQueueTest.kt  # matching, timeout, retry, serialization
+│   └── YfyBatteryParserTest.kt  # 0x2100 battery/charging notification
+└── repository/
+    └── BudsRepositoryTest.kt    # attach, refresh, detach, error mapping
 ```
 
 ## Manual checks (AVD API 30, 1080×2340)
