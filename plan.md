@@ -71,6 +71,8 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
 - [x] Debug system-overlay spike: `SYSTEM_ALERT_WINDOW`, `connectedDevice`
   foreground service, notification and the Compose popup card via
   `WindowManager` (mock data).
+- [x] Battery reader: agent `0x0CD6`, partner through the `0x0D01` relay, with
+  status/level validation and unit tests.
 
 ### 1.2 Current limits
 
@@ -310,8 +312,8 @@ Goal: replace the mocked battery and connection state.
 - [ ] Models `BudsConnection`, `BudsBattery`, `BudsDeviceInfo`.
 - [ ] `BudsRepository`: connection → init → ready → disconnect cycle.
 - [ ] `BudsViewModel` + `BudsUiState`.
-- [ ] Local battery `0x0CD6`.
-- [ ] Partner battery through relay `0x0D01` when a peer is present.
+- [~] Local battery `0x0CD6`.
+- [~] Partner battery through relay `0x0D01` when a peer is present.
 - [ ] Refresh policy: on connection, every 30 s, on return to foreground.
 - [ ] Automatic reconnection to the last device.
 - [ ] Error handling: Bluetooth off, permission denied, timeout, missing device.
