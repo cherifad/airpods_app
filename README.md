@@ -41,6 +41,8 @@ The last row is the **debug system overlay**: the same card rendered by
   initialization result and raw TX/RX RACE log.
 - Debug system overlay: the popup card in a `TYPE_APPLICATION_OVERLAY` window
   hosted by a `connectedDevice` foreground service (mocked data).
+- In-app updates: checks GitHub Releases at launch, downloads the APK with
+  progress and opens the system installer — the browser is never used.
 
 ## Build
 
@@ -74,6 +76,25 @@ HTML test report is at `app/build/reports/tests/testDebugUnitTest/index.html`.
 
 See [`AGENTS.md`](AGENTS.md) for the full conventions.
 
+## CI and releases
+
+`.github/workflows/android.yml` runs on pushes and pull requests:
+`testDebugUnitTest`, `lintDebug`, `assembleDebug` and `assembleRelease`; both
+APKs are uploaded as workflow artifacts.
+
+A `vX.Y.Z` tag additionally publishes a GitHub Release with the tag as its name
+and attaches `app-release.apk`. The workflow derives `versionName` from the tag
+and `versionCode` as `major * 10000 + minor * 100 + patch`.
+
+The CI release is signed with the Android **debug** key until a release keystore
+is configured. That is enough for internal sideloading and for the in-app
+updater, but it is not a Play Store signing setup.
+
+At launch the app reads `releases/latest`, compares the tag numerically with
+`BuildConfig.VERSION_NAME`, downloads the APK automatically and opens the system
+installer. The browser is never used; the user only has to allow installs from
+this source once (`REQUEST_INSTALL_PACKAGES`).
+
 ## Structure
 
 ```
@@ -98,8 +119,12 @@ app/src/main/java/com/airbuds/companion/
 │   │   ├── RaceParser.kt        # fragment/concatenation reassembly
 │   │   ├── RaceTransport.kt     # raw write boundary (implemented by GATT)
 │   │   └── YfyBattery.kt        # 0x2100/0x0D case + charging notification
-│   └── repository/
-│       └── BudsRepository.kt    # connection/init/battery state, error mapping
+│   ├── repository/
+│   │   └── BudsRepository.kt    # connection/init/battery state, error mapping
+│   └── update/
+│       ├── AppRelease.kt        # GitHub release JSON + APK asset
+│       ├── AppUpdateRepository.kt # latest release, download, install
+│       └── AppVersion.kt        # numeric tag comparison
 ├── domain/
 │   └── model/
 │       ├── BudsBattery.kt       # agent/partner levels, unknown-safe
@@ -120,6 +145,8 @@ app/src/main/java/com/airbuds/companion/
     ├── HomeScreen.kt            # header, hero card, controls, battery
     ├── BudsPopup.kt             # bottom popup + scrim + animations
     ├── OverlayPopupContent.kt   # mock-state card rendered in the overlay
+    ├── UpdateDialog.kt          # in-app update progress/install dialog
+    ├── UpdateViewModel.kt       # check, auto-download, install state
     ├── components/
     │   ├── AncSelector.kt       # custom segmented control
     │   ├── Battery.kt           # BatteryPill + BatteryRow
@@ -142,8 +169,11 @@ app/src/test/java/com/airbuds/companion/data/
 │   ├── RaceParserTest.kt        # fragments, concatenation, resync
 │   ├── RaceCommandQueueTest.kt  # matching, timeout, retry, serialization
 │   └── YfyBatteryParserTest.kt  # 0x2100 battery/charging notification
-└── repository/
-    └── BudsRepositoryTest.kt    # attach, refresh, detach, error mapping
+├── repository/
+│   └── BudsRepositoryTest.kt    # attach, refresh, detach, error mapping
+└── update/
+    ├── AppReleaseParserTest.kt  # release JSON and APK selection
+    └── AppVersionTest.kt        # numeric version parsing/comparison
 ```
 
 ## Manual checks (AVD API 30, 1080×2340)

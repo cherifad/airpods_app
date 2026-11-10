@@ -81,6 +81,10 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
   and exception mapping, with tests.
 - [x] ANC controller: `0x0E06` enable/disable/gain, `0x0901` state read, mode
   mapping and tests; the diagnostics screen shows the live filter and gain.
+- [x] GitHub Actions CI: unit tests, lint, debug/release builds, APK artifacts
+  and a GitHub Release on `v*` tags.
+- [x] In-app updater: GitHub Releases check, automatic APK download with
+  progress, optional SHA-256 verification and the system install prompt.
 - [x] FOTA protocol documented from Flycc 2.0.35: update discovery, package
   layout, DFU information, erase/program/commit sequence and TWS variants.
 
@@ -109,7 +113,8 @@ Complexity: **S** (small), **M** (medium), **L** (large, several days).
 - `BudsState` mixes UI state and domain data; replace it with an immutable
   state driven by the repository.
 - The popup does not reflect the real connection state yet.
-- The project has no CI yet; test conventions only cover the RACE unit tests.
+- CI builds both APKs and publishes a GitHub Release on tags; test conventions
+  only cover the unit tests, there is no instrumentation CI yet.
 - The README still describes a prototype; update it once BLE lands.
 
 ---
@@ -155,8 +160,8 @@ with the essential features.
 - FR/EN internationalization.
 - Accessibility: TalkBack, touch targets, contrast, large fonts.
 - Hidden diagnostics screen: RACE logs, version, last exchange.
-- App update check with automatic download through Play In-app Updates, plus a
-  notification when the update is ready to install.
+- App update check with automatic in-app download from GitHub Releases and an
+  install prompt (no browser).
 
 ### 2.4 V2 / exploratory (P2)
 
@@ -281,9 +286,9 @@ app/src/main/java/com/airbuds/companion/
 - [?] **Multi-device**: V1 or V2?
 - [?] **English/French**: English primary and French secondary confirmed; when
   to add more locales?
-- [?] **Git/CI**: initialize a remote repository and GitHub Actions?
-- [x] **App updates**: Play In-app Updates with automatic download; no
-  sideloaded APK auto-update like FlyCC.
+- [x] **Git/CI**: GitHub Actions on `cherifad/airpods_app`, releases on tags.
+- [x] **App updates**: GitHub Releases checked at launch, APK downloaded in the
+  app and handed to the system installer; no browser, no sideload helper.
 - [x] **Firmware updates**: check and notify only, download and install strictly
   on user request.
 
@@ -302,7 +307,7 @@ Goal: a clean, testable and versioned project before adding BLE.
 - [x] Add test dependencies: JUnit 4 and `kotlinx-coroutines-test` (Turbine and
   Compose UI test will land with their first tests).
 - [x] Add a first unit test to validate the setup (`RaceCodecTest`).
-- [ ] Add `./gradlew testDebugUnitTest` and `lintDebug` to CI.
+- [x] Add `./gradlew testDebugUnitTest` and `lintDebug` to CI.
 - [x] Extract UI strings to `res/values/strings.xml` (English default).
 - [x] Add `res/values-fr/strings.xml` and Android 13+ locale config.
 - [ ] Add an empty settings screen or a navigation entry.
@@ -413,8 +418,8 @@ Goal: publish a clean internal beta.
 - [ ] Privacy policy.
 - [ ] Store listing: description, screenshots, icon, banner.
 - [ ] Internal test track in Play Console.
-- [ ] Play In-app Updates: check on launch, notification, automatic download and
-  install prompt.
+- [ ] In-app update check (GitHub Releases), automatic APK download and install
+  prompt.
 - [ ] Regression checklist on a real device.
 - [ ] Version tag and release notes.
 
@@ -577,7 +582,7 @@ documented rollback procedure.
 | R-05 | Internal test | P1 | M | R-01 |
 | R-06 | Versioning and tags | P1 | S | P-01 |
 | R-07 | Rollback procedure | P2 | S | R-05 |
-| R-08 | Play In-app Updates: check, notify, auto-download, install prompt | P1 | M | R-05 |
+| R-08 | In-app update check (GitHub Releases), auto-download, install prompt | P1 | M | R-05 |
 
 ---
 
@@ -652,7 +657,8 @@ the UI and is not exposed.
 | Unguarded FOTA | bricked device | out of scope | — |
 | OTA backend is cleartext HTTP | tampered or spoofed firmware | verify checksum and package origin, prefer an HTTPS mirror, document the risk | ? |
 | Unsigned firmware on the app side | brick or implant | checksum/version checks, explicit confirmation, no auto-install | ? |
-| Automatic app update download uses mobile data | user complaints | Play In-app Updates follows the user's Play settings; keep the install prompt explicit | ? |
+| Automatic app update download | wrong APK, rate limit or mobile data | select the release APK by name, verify SHA-256 when GitHub provides a digest, keep the install prompt explicit | ? |
+| CI release signed with the debug key | cannot publish on Play | add a release keystore in CI secrets before the first Play upload | ? |
 | Play Console account/signing unavailable | release blocked | create account early, internal test | ? |
 
 ---
@@ -690,8 +696,8 @@ Do not start V1 before the MVP is stable on a real device.
 **M1 (continued)**: validate the GATT + initialization path and the debug system
 overlay on a real AB1565. Then start M2: repository/`ViewModel`, battery
 `0x0CD6`, partner relay `0x0D01` and real product UI wiring. The production
-overlay and permission flow come with M4; M0 leftovers (CI and the empty
-settings screen) can follow.
+overlay and permission flow come with M4; M0 leftovers (the empty settings
+screen) can follow.
 
 FOTA validation is pending a capture with real earbuds; the procedure is in
 [`docs/fota-validation.md`](docs/fota-validation.md).
