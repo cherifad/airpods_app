@@ -1,7 +1,11 @@
 package com.airbuds.companion.ui
 
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -36,6 +40,12 @@ fun BudsApp() {
 
     val updateViewModel: UpdateViewModel = viewModel()
     val updateState by updateViewModel.state.collectAsStateWithLifecycle()
+
+    val enableBluetooth = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        budsViewModel.refreshBluetooth()
+    }
 
     val context = LocalContext.current
     val debuggable = remember(context) {
@@ -105,6 +115,7 @@ fun BudsApp() {
                 budsViewModel.disconnect()
             },
             onRefresh = budsViewModel::refresh,
+            onRetry = budsViewModel::retry,
             onOpenDiagnostics = if (debuggable) {
                 { showDiagnostics = true }
             } else {
@@ -124,6 +135,9 @@ fun BudsApp() {
             onDismiss = budsViewModel::hideConnectSheet,
             onScan = budsViewModel::scan,
             onConnect = { device -> budsViewModel.connect(device.device) },
+            onEnableBluetooth = {
+                enableBluetooth.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            },
         )
         UpdateDialog(
             state = updateState,

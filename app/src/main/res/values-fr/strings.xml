@@ -75,6 +75,15 @@
     <string name="connect_paired">Appareils associés</string>
     <string name="connect_nearby">Appareils à proximité</string>
     <string name="connect_paired_label">Associé</string>
+    <string name="connect_connected">Connecté à ce téléphone</string>
+    <string name="connect_connected_badge">Connecté</string>
+    <string name="connect_last_used">Dernier utilisé</string>
+    <string name="connect_last_used_badge">Dernier</string>
+    <string name="connect_support_note">Sonabud fonctionne uniquement avec les écouteurs Airoha/FlyCC.</string>
+    <string name="bluetooth_off">Le Bluetooth est désactivé. Activez-le pour trouver vos écouteurs.</string>
+    <string name="bluetooth_enable">Activer le Bluetooth</string>
+    <string name="error_unsupported_device">Cet appareil n\'est pas un écouteur Airoha/FlyCC.</string>
+    <string name="retry">Réessayer</string>
     <string name="connect_connecting">Connexion…</string>
     <string name="connect_cta">Connecter les écouteurs</string>
     <string name="connect_disconnect">Déconnecter</string>

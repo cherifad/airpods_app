@@ -47,6 +47,7 @@ fun ConnectSheet(
     onDismiss: () -> Unit,
     onScan: () -> Unit,
     onConnect: (ScannedDevice) -> Unit,
+    onEnableBluetooth: () -> Unit,
 ) {
     if (!visible) return
 
@@ -80,8 +81,24 @@ fun ConnectSheet(
                 style = MaterialTheme.typography.headlineSmall,
             )
             Spacer(Modifier.height(6.dp))
+            Text(
+                text = stringResource(R.string.connect_support_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(10.dp))
 
-            if (!permissionsGranted) {
+            if (!state.bluetoothEnabled) {
+                Text(
+                    text = stringResource(R.string.bluetooth_off),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(16.dp))
+                Button(onClick = onEnableBluetooth) {
+                    Text(stringResource(R.string.bluetooth_enable))
+                }
+            } else if (!permissionsGranted) {
                 Text(
                     text = stringResource(R.string.connect_rationale),
                     style = MaterialTheme.typography.bodyMedium,
@@ -137,10 +154,22 @@ fun ConnectSheet(
                 }
 
                 Spacer(Modifier.height(12.dp))
-                val nearby = state.devices.filter { device ->
-                    state.pairedDevices.none { it.device.address == device.device.address }
+                val connected = state.connectedDevices
+                val last = state.lastDevice?.takeIf { device ->
+                    connected.none { it.device.address == device.device.address }
                 }
-                if (state.pairedDevices.isEmpty() && nearby.isEmpty() && !state.scanning) {
+                val paired = state.pairedDevices.filterNot { device ->
+                    connected.any { it.device.address == device.device.address } ||
+                        last?.device?.address == device.device.address
+                }
+                val nearby = state.devices.filterNot { device ->
+                    connected.any { it.device.address == device.device.address } ||
+                        paired.any { it.device.address == device.device.address } ||
+                        last?.device?.address == device.device.address
+                }
+                val empty = connected.isEmpty() && last == null &&
+                    paired.isEmpty() && nearby.isEmpty()
+                if (empty && !state.scanning) {
                     Text(
                         text = stringResource(R.string.connect_no_devices),
                         style = MaterialTheme.typography.bodySmall,
@@ -148,12 +177,30 @@ fun ConnectSheet(
                     )
                 } else {
                     Column(Modifier.fillMaxWidth()) {
-                        if (state.pairedDevices.isNotEmpty()) {
-                            SectionLabel(stringResource(R.string.connect_paired))
-                            state.pairedDevices.forEach { device ->
+                        if (connected.isNotEmpty()) {
+                            SectionLabel(stringResource(R.string.connect_connected))
+                            connected.forEach { device ->
                                 DeviceRow(
                                     device = device,
-                                    paired = true,
+                                    badge = stringResource(R.string.connect_connected_badge),
+                                    onConnect = { onConnect(device) },
+                                )
+                            }
+                        }
+                        if (last != null) {
+                            SectionLabel(stringResource(R.string.connect_last_used))
+                            DeviceRow(
+                                device = last,
+                                badge = stringResource(R.string.connect_last_used_badge),
+                                onConnect = { onConnect(last) },
+                            )
+                        }
+                        if (paired.isNotEmpty()) {
+                            SectionLabel(stringResource(R.string.connect_paired))
+                            paired.forEach { device ->
+                                DeviceRow(
+                                    device = device,
+                                    badge = stringResource(R.string.connect_paired_label),
                                     onConnect = { onConnect(device) },
                                 )
                             }
@@ -163,7 +210,7 @@ fun ConnectSheet(
                             nearby.forEach { device ->
                                 DeviceRow(
                                     device = device,
-                                    paired = false,
+                                    badge = "${device.rssi} dBm",
                                     onConnect = { onConnect(device) },
                                 )
                             }
@@ -186,7 +233,7 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun DeviceRow(device: ScannedDevice, paired: Boolean, onConnect: () -> Unit) {
+private fun DeviceRow(device: ScannedDevice, badge: String, onConnect: () -> Unit) {
     OutlinedButton(
         onClick = onConnect,
         modifier = Modifier
@@ -206,11 +253,7 @@ private fun DeviceRow(device: ScannedDevice, paired: Boolean, onConnect: () -> U
             )
         }
         Text(
-            text = if (paired) {
-                stringResource(R.string.connect_paired_label)
-            } else {
-                "${device.rssi} dBm"
-            },
+            text = badge,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary,
         )

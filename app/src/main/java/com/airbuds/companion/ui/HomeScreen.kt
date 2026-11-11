@@ -55,6 +55,7 @@ fun HomeScreen(
     onAncChange: (AncMode) -> Unit,
     onDisconnect: () -> Unit,
     onRefresh: () -> Unit,
+    onRetry: () -> Unit,
     onOpenDiagnostics: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -70,11 +71,17 @@ fun HomeScreen(
         HomeHeader(state = state, onPrimaryAction = onPrimaryAction)
         state.visibleError?.let { error ->
             Spacer(Modifier.height(10.dp))
-            Text(
-                text = error.userMessage(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = error.userMessage(),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                TextButton(onClick = onRetry) {
+                    Text(stringResource(R.string.retry))
+                }
+            }
         }
         Spacer(Modifier.height(24.dp))
         HeroCard(state = state, onPrimaryAction = onPrimaryAction)

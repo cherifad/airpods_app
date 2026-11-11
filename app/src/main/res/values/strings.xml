@@ -75,6 +75,15 @@
     <string name="connect_paired">Paired devices</string>
     <string name="connect_nearby">Nearby devices</string>
     <string name="connect_paired_label">Paired</string>
+    <string name="connect_connected">Connected to this phone</string>
+    <string name="connect_connected_badge">Connected</string>
+    <string name="connect_last_used">Last used</string>
+    <string name="connect_last_used_badge">Last used</string>
+    <string name="connect_support_note">Sonabud works with Airoha/FlyCC earbuds only.</string>
+    <string name="bluetooth_off">Bluetooth is off. Turn it on to find your earbuds.</string>
+    <string name="bluetooth_enable">Turn on Bluetooth</string>
+    <string name="error_unsupported_device">This device is not an Airoha/FlyCC earbud.</string>
+    <string name="retry">Retry</string>
     <string name="connect_connecting">Connecting…</string>
     <string name="connect_cta">Connect earbuds</string>
     <string name="connect_disconnect">Disconnect</string>
