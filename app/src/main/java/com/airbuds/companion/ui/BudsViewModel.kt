@@ -10,11 +10,14 @@ import com.airbuds.companion.data.ble.BudsSession
 import com.airbuds.companion.data.ble.GattTransport
 import com.airbuds.companion.data.ble.RaceCommandQueue
 import com.airbuds.companion.data.ble.RaceFrame
+import com.airbuds.companion.data.ble.ScannedDevice
 import com.airbuds.companion.data.ble.YfyBatteryParser
+import com.airbuds.companion.data.preferences.DeviceMemory
 import com.airbuds.companion.data.repository.BudsRepository
 import com.airbuds.companion.data.repository.toBudsError
 import com.airbuds.companion.domain.model.BudsBattery
 import com.airbuds.companion.domain.model.BudsConnection
+import com.airbuds.companion.domain.model.BudsError
 import com.airbuds.companion.model.AncMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -42,12 +45,14 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
         RaceCommandQueue(transport, onIndication = ::onIndication)
     private val session = BudsSession(queue)
     private val repository = BudsRepository(session)
+    private val memory = DeviceMemory(application)
 
     private val _uiState = MutableStateFlow(BudsUiState())
     val uiState: StateFlow<BudsUiState> = _uiState.asStateFlow()
 
     private var scanJob: Job? = null
     private var connectJob: Job? = null
+    private var lastAttemptAddress: String? = null
 
     init {
         viewModelScope.launch {
@@ -55,6 +60,7 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update { it.copy(connection = connection) }
                 if (connection is BudsConnection.Ready) {
                     Log.i(TAG, "Ready: $connection")
+                    memory.markSupported(connection.address, _uiState.value.deviceName)
                     readAnc()
                     if (!_uiState.value.battery.isKnown) {
                         // Some firmware answers the first battery command late.
@@ -94,14 +100,35 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun showConnectSheet() {
+        val connected = transport.connectedDevices()
+            .filterNot { memory.isUnsupported(it.device.address) }
+        val paired = transport.bondedDevices()
+            .filterNot { memory.isUnsupported(it.device.address) }
+        val lastAddress = memory.lastAddress
+        val last = lastAddress
+            ?.let { transport.remoteDevice(it) }
+            ?.let { ScannedDevice(it, memory.lastName, GattTransport.LAST_RSSI) }
+            ?.takeIf { candidate ->
+                connected.none { it.device.address == candidate.device.address } &&
+                    paired.none { it.device.address == candidate.device.address }
+            }
+
         _uiState.update {
             it.copy(
                 connectSheetVisible = true,
                 error = null,
-                pairedDevices = runCatching { transport.bondedDevices() }
-                    .getOrDefault(emptyList()),
+                bluetoothEnabled = transport.isBluetoothEnabled(),
+                connectedDevices = connected,
+                pairedDevices = paired,
+                lastDevice = last,
             )
         }
+    }
+
+    /** Re-reads the Bluetooth state and the device lists after the user enables it. */
+    fun refreshBluetooth() {
+        if (!_uiState.value.connectSheetVisible) return
+        showConnectSheet()
     }
 
     fun hideConnectSheet() {
@@ -144,6 +171,7 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
     fun connect(device: BluetoothDevice) {
         stopScan()
         connectJob?.cancel()
+        lastAttemptAddress = device.address
         _uiState.update {
             it.copy(
                 deviceName = device.name ?: it.deviceName,
@@ -161,9 +189,20 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
                 throw cancelled
             } catch (error: Exception) {
                 Log.w(TAG, "Connection to ${device.address} failed", error)
+                val budsError = error.toBudsError()
+                if (budsError is BudsError.UnsupportedDevice) {
+                    memory.markUnsupported(device.address)
+                }
                 repository.markFailed(device.address, error)
             }
         }
+    }
+
+    /** Retries the last address after a failed connection. */
+    fun retry() {
+        val address = lastAttemptAddress ?: return
+        val device = transport.remoteDevice(address) ?: return
+        connect(device)
     }
 
     fun disconnect() {

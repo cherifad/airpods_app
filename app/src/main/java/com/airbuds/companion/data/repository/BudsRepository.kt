@@ -79,12 +79,14 @@ internal fun Throwable.toBudsError(): BudsError = when (this) {
     is RaceBatteryException,
     -> BudsError.Protocol(message ?: javaClass.simpleName)
 
-    is GattException -> {
-        if (message?.contains("disabled", ignoreCase = true) == true) {
+    is GattException -> when {
+        message?.contains("disabled", ignoreCase = true) == true ->
             BudsError.BluetoothDisabled
-        } else {
-            BudsError.Transport(message ?: "GATT failure")
-        }
+
+        message?.contains("Airoha service not found", ignoreCase = true) == true ->
+            BudsError.UnsupportedDevice
+
+        else -> BudsError.Transport(message ?: "GATT failure")
     }
 
     else -> BudsError.Unknown(message ?: javaClass.simpleName)

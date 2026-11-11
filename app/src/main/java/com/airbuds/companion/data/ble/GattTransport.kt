@@ -100,6 +100,39 @@ class GattTransport(
             }
     }
 
+    /** Audio/GATT devices currently connected to this phone. */
+    @SuppressLint("MissingPermission")
+    fun connectedDevices(): List<ScannedDevice> {
+        val manager = bluetoothManager ?: return emptyList()
+        val adapter = manager.adapter ?: return emptyList()
+        if (!adapter.isEnabled) return emptyList()
+
+        return listOf(
+            BluetoothProfile.A2DP,
+            BluetoothProfile.HEADSET,
+            BluetoothProfile.GATT,
+        ).flatMap { profile ->
+            runCatching { manager.getConnectedDevices(profile) }.getOrDefault(emptyList())
+        }
+            .distinctBy { it.address }
+            .map { device ->
+                ScannedDevice(
+                    device = device,
+                    name = device.name,
+                    rssi = CONNECTED_RSSI,
+                )
+            }
+    }
+
+    /** True when the Bluetooth adapter exists and is enabled. */
+    fun isBluetoothEnabled(): Boolean =
+        runCatching { adapter().isEnabled }.getOrDefault(false)
+
+    /** Resolves an address remembered from a previous session. */
+    @SuppressLint("MissingPermission")
+    fun remoteDevice(address: String): BluetoothDevice? =
+        runCatching { adapter().getRemoteDevice(address) }.getOrNull()
+
     /** Emits devices advertising the Airoha service until [timeoutMillis] elapses. */
     fun scan(
         timeoutMillis: Long = DEFAULT_SCAN_TIMEOUT_MS,
@@ -529,6 +562,12 @@ class GattTransport(
 
         /** Sentinel RSSI for bonded devices that were not seen in a scan. */
         const val PAIRED_RSSI = Int.MIN_VALUE
+
+        /** Sentinel RSSI for devices already connected to this phone. */
+        const val CONNECTED_RSSI = Int.MAX_VALUE
+
+        /** Sentinel RSSI for the last device remembered from a previous session. */
+        const val LAST_RSSI = Int.MAX_VALUE - 1
 
         private const val TAG = "GattTransport"
         private const val RETRY_DELAY_MS = 350L
