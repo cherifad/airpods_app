@@ -128,6 +128,25 @@ class GattTransport(
     fun isBluetoothEnabled(): Boolean =
         runCatching { adapter().isEnabled }.getOrDefault(false)
 
+    /** The first device connected over A2DP or HFP, if any. */
+    @SuppressLint("MissingPermission")
+    fun currentAudioDevice(): BluetoothDevice? {
+        val manager = bluetoothManager ?: return null
+        return listOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET)
+            .flatMap { profile ->
+                runCatching { manager.getConnectedDevices(profile) }.getOrDefault(emptyList())
+            }
+            .firstOrNull()
+    }
+
+    /** A bonded audio device whose name matches [name]. */
+    fun pairedAudioDevice(name: String?): BluetoothDevice? {
+        if (name.isNullOrBlank()) return null
+        return bondedDevices()
+            .firstOrNull { it.name?.equals(name, ignoreCase = true) == true }
+            ?.device
+    }
+
     /** Resolves an address remembered from a previous session. */
     @SuppressLint("MissingPermission")
     fun remoteDevice(address: String): BluetoothDevice? =

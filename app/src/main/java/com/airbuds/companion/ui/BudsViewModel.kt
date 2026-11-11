@@ -6,11 +6,13 @@ import android.bluetooth.BluetoothDevice
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.airbuds.companion.data.ble.ActiveRaceTransport
 import com.airbuds.companion.data.ble.BudsSession
 import com.airbuds.companion.data.ble.GattTransport
 import com.airbuds.companion.data.ble.RaceCommandQueue
 import com.airbuds.companion.data.ble.RaceFrame
 import com.airbuds.companion.data.ble.ScannedDevice
+import com.airbuds.companion.data.ble.SppTransport
 import com.airbuds.companion.data.ble.YfyBatteryParser
 import com.airbuds.companion.data.preferences.DeviceMemory
 import com.airbuds.companion.data.repository.BudsRepository
@@ -37,12 +39,17 @@ import kotlinx.coroutines.launch
  */
 class BudsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val transport: GattTransport = GattTransport(
+    private val gatt: GattTransport = GattTransport(
         context = application,
         onFrame = { frame: RaceFrame -> queue.onFrame(frame) },
     )
+    private val spp: SppTransport = SppTransport(
+        context = application,
+        onFrame = { frame: RaceFrame -> queue.onFrame(frame) },
+    )
+    private val active = ActiveRaceTransport(gatt)
     private val queue: RaceCommandQueue =
-        RaceCommandQueue(transport, onIndication = ::onIndication)
+        RaceCommandQueue(active, onIndication = ::onIndication)
     private val session = BudsSession(queue)
     private val repository = BudsRepository(session)
     private val memory = DeviceMemory(application)
@@ -100,13 +107,13 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun showConnectSheet() {
-        val connected = transport.connectedDevices()
+        val connected = gatt.connectedDevices()
             .filterNot { memory.isUnsupported(it.device.address) }
-        val paired = transport.bondedDevices()
+        val paired = gatt.bondedDevices()
             .filterNot { memory.isUnsupported(it.device.address) }
         val lastAddress = memory.lastAddress
         val last = lastAddress
-            ?.let { transport.remoteDevice(it) }
+            ?.let { gatt.remoteDevice(it) }
             ?.let { ScannedDevice(it, memory.lastName, GattTransport.LAST_RSSI) }
             ?.takeIf { candidate ->
                 connected.none { it.device.address == candidate.device.address } &&
@@ -117,7 +124,7 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
             it.copy(
                 connectSheetVisible = true,
                 error = null,
-                bluetoothEnabled = transport.isBluetoothEnabled(),
+                bluetoothEnabled = gatt.isBluetoothEnabled(),
                 connectedDevices = connected,
                 pairedDevices = paired,
                 lastDevice = last,
@@ -137,7 +144,7 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
 
     fun scan() {
         scanJob?.cancel()
-        val paired = runCatching { transport.bondedDevices() }.getOrDefault(emptyList())
+        val paired = runCatching { gatt.bondedDevices() }.getOrDefault(emptyList())
         _uiState.update {
             it.copy(
                 scanning = true,
@@ -148,7 +155,7 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
         }
         scanJob = viewModelScope.launch {
             try {
-                transport.scan().collect { device ->
+                gatt.scan().collect { device ->
                     _uiState.update { current ->
                         current.copy(
                             devices = (current.devices + device)
@@ -182,15 +189,39 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
         repository.markConnecting(device.address)
 
         connectJob = viewModelScope.launch {
+            val sppDevice = if (device.bondState == BluetoothDevice.BOND_BONDED) {
+                device
+            } else {
+                gatt.pairedAudioDevice(device.name) ?: gatt.currentAudioDevice()
+            }
+            var gattUnsupported = false
+
             try {
-                transport.connect(device)
+                active.delegate = gatt
+                try {
+                    gatt.connect(device)
+                    Log.i(TAG, "Connected via GATT to ${device.address}")
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (gattError: Exception) {
+                    gattUnsupported =
+                        gattError.toBudsError() is BudsError.UnsupportedDevice
+                    if (sppDevice == null) throw gattError
+                    Log.i(
+                        TAG,
+                        "GATT failed, falling back to SPP on ${sppDevice.address}",
+                        gattError,
+                    )
+                    active.delegate = spp
+                    spp.connect(sppDevice)
+                    Log.i(TAG, "Connected via SPP to ${sppDevice.address}")
+                }
                 repository.attach(device.address)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
                 Log.w(TAG, "Connection to ${device.address} failed", error)
-                val budsError = error.toBudsError()
-                if (budsError is BudsError.UnsupportedDevice) {
+                if (gattUnsupported || error.toBudsError() is BudsError.UnsupportedDevice) {
                     memory.markUnsupported(device.address)
                 }
                 repository.markFailed(device.address, error)
@@ -201,7 +232,7 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
     /** Retries the last address after a failed connection. */
     fun retry() {
         val address = lastAttemptAddress ?: return
-        val device = transport.remoteDevice(address) ?: return
+        val device = gatt.remoteDevice(address) ?: return
         connect(device)
     }
 
@@ -209,7 +240,8 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
         stopScan()
         connectJob?.cancel()
         connectJob = null
-        transport.close()
+        gatt.close()
+        spp.close()
         repository.detach()
         _uiState.update {
             it.copy(
@@ -279,7 +311,8 @@ class BudsViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     override fun onCleared() {
-        transport.close()
+        gatt.close()
+        spp.close()
         super.onCleared()
     }
 
